@@ -6,6 +6,7 @@ function App() {
   const [cards, setCards] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [search, setSearch] = useState("");
   // Cada vez que este número cambia, el efecto vuelve a cargar las cartas
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -15,7 +16,10 @@ function App() {
 
     async function loadCards() {
       try {
-        const response = await fetch("/api/cards");
+        const params = new URLSearchParams();
+        if (search.trim()) params.set("search", search.trim());
+
+        const response = await fetch(`/api/cards?${params}`);
         if (!response.ok) {
           throw new Error("No se pudieron cargar las cartas");
         }
@@ -33,11 +37,10 @@ function App() {
 
     loadCards();
 
-    // Función de limpieza: se ejecuta antes de repetir el efecto o al quitar el componente
     return () => {
       ignore = true;
     };
-  }, [refreshKey]);
+  }, [refreshKey, search]);
 
   function reloadCards() {
     setRefreshKey((current) => current + 1);
@@ -47,7 +50,22 @@ function App() {
     <div className="container">
       <h1>Magic Card Store</h1>
       <AddCardForm onCardAdded={reloadCards} />
-      <CardList cards={cards} loading={loading} error={error} />
+
+      <input
+        type="search"
+        className="search-input"
+        placeholder="Buscar en la tienda por nombre..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+      />
+
+      <CardList
+        cards={cards}
+        loading={loading}
+        error={error}
+        search={search}
+        onChanged={reloadCards}
+      />
     </div>
   );
 }

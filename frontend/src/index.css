@@ -134,3 +134,62 @@ body {
 .success {
   color: #1b7f3b;
 }
+
+.search-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px;
+  margin-bottom: 16px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+.card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.card-actions button {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  border-radius: 6px;
+  background: #2b5fd9;
+  color: #fff;
+  cursor: pointer;
+}
+
+.card-actions button.secondary {
+  background: #777;
+}
+
+.card-actions button.danger {
+  background: #c62828;
+}
+
+.card-actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.edit-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.85rem;
+}
+
+.edit-form input,
+.edit-form select {
+  padding: 6px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
