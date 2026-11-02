@@ -62,31 +62,19 @@ magic-card-store/
 
 ### Instalación
 
+
 ```bash
 git clone https://github.com/JavierMoyaSimo/magic-card-store.git
 cd magic-card-store
-```
-
-**Backend**
-
-```bash
-cd backend
 npm install
-cp .env.example .env   # Después, edita .env con tu cadena de conexión a MongoDB
+npm run install:all
+cp backend/.env.example backend/.env   # then edit backend/.env with your MongoDB connection string
 npm run dev
 ```
 
-La API estará disponible en `http://localhost:5000`.
+La API correrá en `http://localhost:5000` y la aplicación en `http://localhost:5173`.
 
-**Frontend** (en una segunda terminal)
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-La aplicación estará disponible en `http://localhost:5173`. Vite redirige las peticiones a `/api` hacia el backend.
+ Vite redirige las peticiones a `/api` hacia el backend.
 
 ### Variables de entorno
 
