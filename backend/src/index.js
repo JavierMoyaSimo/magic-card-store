@@ -6,6 +6,7 @@ import dns from "node:dns";
 
 import scryfallRoutes from "./routes/scryfall.routes.js";
 import cardRoutes from "./routes/cards.routes.js";
+import identifyRoutes from "./routes/identify.routes.js";
 
 // Algunos routers/operadores rechazan las consultas SRV que necesita MongoDB Atlas.
 // Usamos DNS públicos (Google y Cloudflare) para resolverlas.
@@ -29,6 +30,8 @@ app.get("/api/health", (req, res) => {
 app.use("/api/scryfall", scryfallRoutes);
 // Rutas de cartas de la tienda
 app.use("/api/cards", cardRoutes);
+// Rutas de identificación de cartas
+app.use("/api/identify", identifyRoutes);
 
 // Conecta con MongoDB y, solo si lo consigue, arranca el servidor
 async function start() {

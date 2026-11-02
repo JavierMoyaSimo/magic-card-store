@@ -14,6 +14,7 @@ function AddCardForm({ onCardAdded }) {
   const [condition, setCondition] = useState("NM");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(null); // { type: "ok" | "error", text }
+  const [identifying, setIdentifying] = useState(false);
 
   // Valores calculados al pintar (no necesitan estado propio)
   const query = name.trim();
@@ -66,6 +67,44 @@ function AddCardForm({ onCardAdded }) {
       if (response.ok) setPreview(await response.json());
     } catch {
       setPreview(null);
+    }
+  }
+
+  async function handlePhoto(event) {
+    const file = event.target.files[0];
+    event.target.value = ""; // permite volver a elegir el mismo archivo
+    if (!file) return;
+
+    setIdentifying(true);
+    setMessage(null);
+
+    try {
+      // FormData es el formato para enviar archivos
+      const formData = new FormData();
+      formData.append("image", file);
+
+      // No añadimos el header Content-Type: el navegador lo pone solo
+      const response = await fetch("/api/identify", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "No se pudo identificar la carta");
+      }
+
+      setName(data.card.name);
+      setSelectedName(data.card.name);
+      setPreview(data.card);
+      setMessage({
+        type: "ok",
+        text: `Carta identificada: ${data.card.name} (confianza: ${data.confidence}). Comprueba que es la correcta.`,
+      });
+    } catch (err) {
+      setMessage({ type: "error", text: err.message });
+    } finally {
+      setIdentifying(false);
     }
   }
 
@@ -140,6 +179,17 @@ function AddCardForm({ onCardAdded }) {
           </ul>
         )}
       </div>
+
+      <label className="photo-upload">
+        O sube una foto de la carta
+        <input
+          type="file"
+          accept="image/*"
+          onChange={handlePhoto}
+          disabled={identifying}
+        />
+      </label>
+      {identifying && <p>Identificando la carta con Claude...</p>}
 
       {preview?.imageUrl && (
         <img className="preview" src={preview.imageUrl} alt={preview.name} />
