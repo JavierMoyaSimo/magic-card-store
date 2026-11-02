@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import dns from "node:dns";
+import scryfallRoutes from "./routes/scryfall.routes.js";
 
 // Algunos routers/operadores rechazan las consultas SRV que necesita MongoDB Atlas.
 // Usamos DNS públicos (Google y Cloudflare) para resolverlas.
@@ -22,6 +23,8 @@ app.use(express.json()); // permite recibir datos en formato JSON
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok", message: "Servidor funcionando" });
 });
+// Rutas de Scryfall
+app.use("/api/scryfall", scryfallRoutes);
 
 // Conecta con MongoDB y, solo si lo consigue, arranca el servidor
 async function start() {
