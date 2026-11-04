@@ -4,7 +4,13 @@
 
 Una aplicación web full-stack para gestionar una tienda online de cartas de _Magic: The Gathering_, inspirada en CardMarket. Escribe el nombre de una carta o sube una fotografía de ella y la aplicación obtiene automáticamente sus datos e imagen oficiales.
 
-![Captura de pantalla de Magic Card Store](docs/screenshot.png)
+![Catálogo público de la tienda](docs/screenshot0.png)
+
+![Inicio de sesión y registro](docs/screenshot1.png)
+
+![Panel de administración para añadir cartas](docs/screenshot2.png)
+
+![Edición y gestión de cartas](docs/screenshot3.png)
 
 ## Funcionalidades
 
