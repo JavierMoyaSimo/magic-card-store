@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../auth/useAuth.js";
+import { apiUrl } from "../api.js";
 
 function AddCardForm({ onCardAdded }) {
   const { token } = useAuth();
@@ -33,7 +34,7 @@ function AddCardForm({ onCardAdded }) {
     const timer = setTimeout(async () => {
       try {
         const response = await fetch(
-          `/api/scryfall/autocomplete?q=${encodeURIComponent(query)}`,
+          apiUrl(`/api/scryfall/autocomplete?q=${encodeURIComponent(query)}`),
           { headers: { Authorization: `Bearer ${token}` } },
         );
         if (!response.ok) return;
@@ -65,7 +66,7 @@ function AddCardForm({ onCardAdded }) {
     // Pedimos la carta completa para enseñar su imagen
     try {
       const response = await fetch(
-        `/api/scryfall/search?name=${encodeURIComponent(suggestion)}`,
+        apiUrl(`/api/scryfall/search?name=${encodeURIComponent(suggestion)}`),
         { headers: { Authorization: `Bearer ${token}` } },
       );
       if (response.ok) setPreview(await response.json());
@@ -88,7 +89,7 @@ function AddCardForm({ onCardAdded }) {
       formData.append("image", file);
 
       // No añadimos el header Content-Type: el navegador lo pone solo
-      const response = await fetch("/api/identify", {
+      const response = await fetch(apiUrl("/api/identify"), {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
@@ -119,7 +120,7 @@ function AddCardForm({ onCardAdded }) {
     setMessage(null);
 
     try {
-      const response = await fetch("/api/cards", {
+      const response = await fetch(apiUrl("/api/cards"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

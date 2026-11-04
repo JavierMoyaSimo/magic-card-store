@@ -8,11 +8,23 @@ import { requireAuth, requireAdmin } from "./middleware/auth.js";
 
 const app = express();
 
-// Middlewares
-app.use(cors());
+// Detrás del balanceador de carga de Render, la IP real del visitante llega en una cabecera.
+// Con esto, el límite de intentos se aplica por visitante y no a todos a la vez.
+if (process.env.NODE_ENV === "production") {
+  app.set("trust proxy", 1);
+}
+
+// Solo las direcciones de esta lista pueden llamar a la API desde un navegador.
+// FRONTEND_URL admite varias direcciones separadas por comas.
+const allowedOrigins = (process.env.FRONTEND_URL || "http://localhost:5173")
+  .split(",")
+  .map((origin) => origin.trim().replace(/\/$/, ""));
+
+// Middlewares: funciones que se ejecutan en cada petición antes de llegar a las rutas
+app.use(cors({ origin: allowedOrigins }));
 app.use(express.json());
 
-// Ruta comprueba que el servidor responde
+// Ruta de prueba
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok", message: "Servidor funcionando" });
 });

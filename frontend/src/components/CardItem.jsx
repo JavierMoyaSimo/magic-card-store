@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "../auth/useAuth.js";
+import { apiUrl } from "../api.js";
 
 function CardItem({ card, onChanged }) {
   const { token, isAdmin } = useAuth();
@@ -25,7 +26,7 @@ function CardItem({ card, onChanged }) {
     setError(null);
 
     try {
-      const response = await fetch(`/api/cards/${card._id}`, {
+      const response = await fetch(apiUrl(`/api/cards/${card._id}`), {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -60,7 +61,7 @@ function CardItem({ card, onChanged }) {
     setError(null);
 
     try {
-      const response = await fetch(`/api/cards/${card._id}`, {
+      const response = await fetch(apiUrl(`/api/cards/${card._id}`), {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });

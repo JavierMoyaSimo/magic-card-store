@@ -1,4 +1,4 @@
-import dotenv from "dotenv";
+import "dotenv/config";
 import mongoose from "mongoose";
 import dns from "node:dns";
 import app from "./app.js";
@@ -6,9 +6,6 @@ import app from "./app.js";
 // Algunos routers/operadores rechazan las consultas SRV que necesita MongoDB Atlas.
 // Usamos DNS públicos (Google y Cloudflare) para resolverlas.
 dns.setServers(["8.8.8.8", "1.1.1.1"]);
-
-// Lee las variables del archivo .env
-dotenv.config();
 
 const PORT = process.env.PORT || 5000;
 

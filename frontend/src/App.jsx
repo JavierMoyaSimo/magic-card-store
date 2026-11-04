@@ -3,6 +3,7 @@ import CardList from "./components/CardList.jsx";
 import AddCardForm from "./components/AddCardForm.jsx";
 import AuthPanel from "./components/AuthPanel.jsx";
 import { useAuth } from "./auth/useAuth.js";
+import { apiUrl } from "./api.js";
 
 function App() {
   const { user, isAdmin, logout } = useAuth();
@@ -24,7 +25,7 @@ function App() {
         const params = new URLSearchParams();
         if (search.trim()) params.set("search", search.trim());
 
-        const response = await fetch(`/api/cards?${params}`);
+        const response = await fetch(apiUrl(`/api/cards?${params}`));
         if (!response.ok) {
           throw new Error("No se pudieron cargar las cartas");
         }

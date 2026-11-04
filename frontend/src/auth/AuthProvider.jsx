@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { AuthContext } from "./AuthContext.js";
+import { apiUrl } from "../api.js";
 
 const STORAGE_KEY = "magic-store-token";
 
@@ -12,7 +13,7 @@ function readToken() {
 }
 
 async function authRequest(path, email, password) {
-  const response = await fetch(`/api/auth/${path}`, {
+  const response = await fetch(apiUrl(`/api/auth/${path}`), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
@@ -37,7 +38,7 @@ export function AuthProvider({ children }) {
 
     async function checkSession() {
       try {
-        const response = await fetch("/api/auth/me", {
+        const response = await fetch(apiUrl("/api/auth/me"), {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (ignore) return;
