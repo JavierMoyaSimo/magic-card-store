@@ -14,6 +14,10 @@ const PORT = process.env.PORT || 5000;
 
 // Conecta con MongoDB y, solo si lo consigue, arranca el servidor
 async function start() {
+  if (!process.env.JWT_SECRET) {
+    console.error("Falta JWT_SECRET en el archivo .env");
+    process.exit(1);
+  }
   try {
     await mongoose.connect(process.env.MONGODB_URI);
     console.log("Conectado a MongoDB");

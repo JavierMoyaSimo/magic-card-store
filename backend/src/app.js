@@ -3,6 +3,8 @@ import cors from "cors";
 import scryfallRoutes from "./routes/scryfall.routes.js";
 import cardRoutes from "./routes/cards.routes.js";
 import identifyRoutes from "./routes/identify.routes.js";
+import authRoutes from "./routes/auth.routes.js";
+import { requireAuth, requireAdmin } from "./middleware/auth.js";
 
 const app = express();
 
@@ -15,8 +17,9 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "ok", message: "Servidor funcionando" });
 });
 
-app.use("/api/scryfall", scryfallRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/scryfall", requireAuth, requireAdmin, scryfallRoutes);
+app.use("/api/identify", requireAuth, requireAdmin, identifyRoutes);
 app.use("/api/cards", cardRoutes);
-app.use("/api/identify", identifyRoutes);
 
 export default app;

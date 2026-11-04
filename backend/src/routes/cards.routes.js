@@ -2,6 +2,7 @@ import { Router } from "express";
 import mongoose from "mongoose";
 import Card from "../models/Card.js";
 import { findCardByName } from "../services/scryfall.js";
+import { requireAuth, requireAdmin } from "../middleware/auth.js";
 
 const router = Router();
 
@@ -28,7 +29,7 @@ function escapeRegex(text) {
 
 // CREATE: POST /api/cards
 // Body: { "name": "lightning bolt", "price": 1.5, "stock": 4, "condition": "NM" }
-router.post("/", async (req, res) => {
+router.post("/", requireAuth, requireAdmin, async (req, res) => {
   const { name, price, stock, condition } = req.body;
 
   if (!name) {
@@ -94,7 +95,7 @@ router.get("/:id", async (req, res) => {
 
 // UPDATE: PUT /api/cards/:id
 // Solo permitimos cambiar los datos de la tienda, no los de la carta
-router.put("/:id", async (req, res) => {
+router.put("/:id", requireAuth, requireAdmin, async (req, res) => {
   const updates = {};
   for (const field of ["price", "stock", "condition"]) {
     if (req.body[field] !== undefined) {
@@ -117,7 +118,7 @@ router.put("/:id", async (req, res) => {
 });
 
 // DELETE: DELETE /api/cards/:id
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", requireAuth, requireAdmin, async (req, res) => {
   try {
     const card = await Card.findByIdAndDelete(req.params.id);
     if (!card) {
