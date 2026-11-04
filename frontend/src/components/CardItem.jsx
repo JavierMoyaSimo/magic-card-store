@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { useAuth } from "../auth/useAuth.js";
 
 function CardItem({ card, onChanged }) {
+  const { token, isAdmin } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [price, setPrice] = useState(String(card.price));
   const [stock, setStock] = useState(String(card.stock));
@@ -25,7 +27,10 @@ function CardItem({ card, onChanged }) {
     try {
       const response = await fetch(`/api/cards/${card._id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({
           price: Number(price),
           stock: Number(stock),
@@ -57,6 +62,7 @@ function CardItem({ card, onChanged }) {
     try {
       const response = await fetch(`/api/cards/${card._id}`, {
         method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (!response.ok) {
         const data = await response.json();
@@ -131,19 +137,21 @@ function CardItem({ card, onChanged }) {
           <p>Estado: {card.condition}</p>
           <p className="price">{card.price.toFixed(2)} €</p>
           <p>Stock: {card.stock}</p>
-          <div className="card-actions">
-            <button type="button" onClick={startEditing} disabled={busy}>
-              Editar
-            </button>
-            <button
-              type="button"
-              className="danger"
-              onClick={handleDelete}
-              disabled={busy}
-            >
-              Eliminar
-            </button>
-          </div>
+          {isAdmin && (
+            <div className="card-actions">
+              <button type="button" onClick={startEditing} disabled={busy}>
+                Editar
+              </button>
+              <button
+                type="button"
+                className="danger"
+                onClick={handleDelete}
+                disabled={busy}
+              >
+                Eliminar
+              </button>
+            </div>
+          )}
         </>
       )}
 

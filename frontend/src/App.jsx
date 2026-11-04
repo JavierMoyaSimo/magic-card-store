@@ -1,8 +1,13 @@
 import { useEffect, useState } from "react";
 import CardList from "./components/CardList.jsx";
 import AddCardForm from "./components/AddCardForm.jsx";
+import AuthPanel from "./components/AuthPanel.jsx";
+import { useAuth } from "./auth/useAuth.js";
 
 function App() {
+  const { user, isAdmin, logout } = useAuth();
+  const [showAuth, setShowAuth] = useState(false);
+
   const [cards, setCards] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -48,8 +53,31 @@ function App() {
 
   return (
     <div className="container">
-      <h1>Magic Card Store</h1>
-      <AddCardForm onCardAdded={reloadCards} />
+      <header className="app-header">
+        <h1>Magic Card Store</h1>
+
+        <div className="auth-area">
+          {user ? (
+            <>
+              <span>
+                {user.email}
+                {isAdmin && <span className="badge">admin</span>}
+              </span>
+              <button type="button" onClick={logout}>
+                Cerrar sesión
+              </button>
+            </>
+          ) : (
+            <button type="button" onClick={() => setShowAuth(true)}>
+              Iniciar sesión
+            </button>
+          )}
+        </div>
+      </header>
+
+      {showAuth && !user && <AuthPanel onClose={() => setShowAuth(false)} />}
+
+      {isAdmin && <AddCardForm onCardAdded={reloadCards} />}
 
       <input
         type="search"

@@ -197,3 +197,50 @@ body {
 .photo-upload {
   font-size: 0.9rem;
 }
+
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.app-header h1 {
+  margin: 0;
+}
+
+.auth-area {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.auth-area button {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  background: #2b5fd9;
+  color: #fff;
+  cursor: pointer;
+}
+
+.badge {
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #2b5fd9;
+  color: #fff;
+  font-size: 0.75rem;
+}
+
+.link-button {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #2b5fd9;
+  font-size: 0.9rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
