@@ -10,12 +10,12 @@ process.env.JWT_SECRET = "test-secret";
 const FAKE_ID = "64b7f0f2f2f2f2f2f2f2f2f2";
 
 // Fabrica un pase válido con el rol indicado, sin pasar por la base de datos
-function authHeader(role) {
+function authHeader(role, userId = FAKE_ID) {
   const token = jwt.sign(
     { email: `${role}@test.com`, role },
     process.env.JWT_SECRET,
     {
-      subject: FAKE_ID,
+      subject: userId,
       expiresIn: "1h",
     },
   );
@@ -37,6 +37,13 @@ describe("Public routes", () => {
 
     assert.equal(res.status, 400);
     assert.equal(res.body.error, "El id no es válido");
+  });
+
+  test("Las respuestas incluyen cabeceras de seguridad", async () => {
+    const res = await request(app).get("/api/health");
+
+    assert.equal(res.headers["x-content-type-options"], "nosniff");
+    assert.equal(res.headers["x-powered-by"], undefined);
   });
 });
 
@@ -159,6 +166,18 @@ describe("Validations as admin", () => {
       });
 
     assert.equal(res.status, 400);
+
+    test("POST /api/identify aplica un límite de uso por usuario", async () => {
+      // Usamos otro id de usuario para no consumir el límite de los demás tests
+      const headers = authHeader("admin", "64b7f0f2f2f2f2f2f2f2f2f3");
+      let lastResponse;
+
+      for (let i = 0; i < 31; i++) {
+        lastResponse = await request(app).post("/api/identify").set(headers);
+      }
+
+      assert.equal(lastResponse.status, 429);
+    });
   });
 });
 

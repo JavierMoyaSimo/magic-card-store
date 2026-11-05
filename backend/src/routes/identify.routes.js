@@ -1,5 +1,6 @@
 import { Router } from "express";
 import multer from "multer";
+import rateLimit from "express-rate-limit";
 import { identifyCardName } from "../services/vision.js";
 import { findCardByName } from "../services/scryfall.js";
 
@@ -15,8 +16,21 @@ const upload = multer({
     cb(null, ALLOWED_TYPES.includes(file.mimetype)),
 });
 
+// Máximo 30 identificaciones por hora y usuario (cada una consume saldo de la API de Claude)
+const identifyLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 30,
+  keyGenerator: (req) => req.user.id,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: {
+    error:
+      "Has alcanzado el límite de identificaciones por foto. Inténtalo más tarde.",
+  },
+});
+
 // POST /api/identify   (multipart/form-data, campo "image")
-router.post("/", (req, res) => {
+router.post("/", identifyLimiter, (req, res) => {
   upload.single("image")(req, res, async (uploadError) => {
     if (uploadError) {
       const tooBig = uploadError.code === "LIMIT_FILE_SIZE";

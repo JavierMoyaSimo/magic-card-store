@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import helmet from "helmet";
 import scryfallRoutes from "./routes/scryfall.routes.js";
 import cardRoutes from "./routes/cards.routes.js";
 import identifyRoutes from "./routes/identify.routes.js";
@@ -21,6 +22,7 @@ const allowedOrigins = (process.env.FRONTEND_URL || "http://localhost:5173")
   .map((origin) => origin.trim().replace(/\/$/, ""));
 
 // Middlewares: funciones que se ejecutan en cada petición antes de llegar a las rutas
+app.use(helmet()); // Seguridad: Añade cabeceras HTTP de seguridad y oculta que usamos Express
 app.use(cors({ origin: allowedOrigins }));
 app.use(express.json());
 
