@@ -38,6 +38,7 @@ El catálogo es público y se puede consultar sin iniciar sesión. Para probar e
 - Protección contra duplicados: no se puede añadir dos veces la misma carta.
 - Pruebas automatizadas e integración continua mediante GitHub Actions.
 - Aplicación desplegada en internet (frontend y backend en Render, base de datos en MongoDB Atlas).
+- Seguridad adicional: cabeceras HTTP de protección con Helmet y límite de uso por usuario en la identificación mediante fotografías, que consume saldo de la API de Claude.
 
 ## Autenticación y roles
 
@@ -56,15 +57,15 @@ El catálogo es público y se puede consultar sin iniciar sesión. Para probar e
 
 ## Tecnologías utilizadas
 
-| Capa                           | Tecnología                                                                  |
-| ------------------------------ | --------------------------------------------------------------------------- |
-| Frontend                       | React, Vite                                                                 |
-| Backend                        | Node.js, Express, Multer                                                    |
-| Base de datos                  | MongoDB Atlas, Mongoose                                                     |
-| Autenticación y seguridad      | JSON Web Tokens (`jsonwebtoken`), bcrypt (`bcryptjs`), `express-rate-limit` |
-| APIs externas                  | Scryfall (datos de cartas), Claude API (reconocimiento de imágenes)         |
-| Pruebas e integración continua | `node:test`, Supertest, GitHub Actions                                      |
-| Despliegue                     | Render (Web Service y Static Site), MongoDB Atlas                           |
+| Capa                           | Tecnología                                                                            |
+| ------------------------------ | ------------------------------------------------------------------------------------- |
+| Frontend                       | React, Vite                                                                           |
+| Backend                        | Node.js, Express, Multer                                                              |
+| Base de datos                  | MongoDB Atlas, Mongoose                                                               |
+| Autenticación y seguridad      | JSON Web Tokens (`jsonwebtoken`), bcrypt (`bcryptjs`), `express-rate-limit`, `helmet` |
+| APIs externas                  | Scryfall (datos de cartas), Claude API (reconocimiento de imágenes)                   |
+| Pruebas e integración continua | `node:test`, Supertest, GitHub Actions                                                |
+| Despliegue                     | Render (Web Service y Static Site), MongoDB Atlas                                     |
 
 ## Estructura del proyecto
 
@@ -132,15 +133,15 @@ La API estará disponible en `http://localhost:5000` y la aplicación en `http:/
 
 **Backend** (`backend/.env`):
 
-| Variable            | Descripción                                                                                              |
-| ------------------- | -------------------------------------------------------------------------------------------------------- |
-| `MONGODB_URI`       | Cadena de conexión de MongoDB Atlas, incluyendo el nombre de la base de datos                            |
-| `JWT_SECRET`        | Cadena larga y aleatoria utilizada para firmar los tokens de autenticación (obligatoria)                 |
-| `ANTHROPIC_API_KEY` | Clave API de Claude, utilizada para la funcionalidad de identificación mediante fotografías              |
-| `FRONTEND_URL`      | Dirección o direcciones (separadas por comas) desde las que se permite llamar a la API (CORS)            |
-| `NODE_ENV`          | `production` en el entorno desplegado; activa la confianza en el proxy para detectar la IP del visitante |
-| `PORT`              | Puerto del backend (por defecto, `5000`). En Render lo asigna la propia plataforma                       |
-| `CLAUDE_MODEL`      | Opcional. Modelo de Claude utilizado para identificar las cartas (por defecto, `claude-haiku-5-5`)       |
+| Variable            | Descripción                                                                                                                                   |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MONGODB_URI`       | Cadena de conexión de MongoDB Atlas, incluyendo el nombre de la base de datos (`magic-store-dev` en desarrollo y `magic-store` en producción) |
+| `JWT_SECRET`        | Cadena larga y aleatoria utilizada para firmar los tokens de autenticación (obligatoria)                                                      |
+| `ANTHROPIC_API_KEY` | Clave API de Claude, utilizada para la funcionalidad de identificación mediante fotografías                                                   |
+| `FRONTEND_URL`      | Dirección o direcciones (separadas por comas) desde las que se permite llamar a la API (CORS)                                                 |
+| `NODE_ENV`          | `production` en el entorno desplegado; activa la confianza en el proxy para detectar la IP del visitante                                      |
+| `PORT`              | Puerto del backend (por defecto, `5000`). En Render lo asigna la propia plataforma                                                            |
+| `CLAUDE_MODEL`      | Opcional. Modelo de Claude utilizado para identificar las cartas (por defecto, `claude-haiku-5-5`)                                            |
 
 **Frontend** (`frontend/.env`, opcional en desarrollo):
 
@@ -204,6 +205,8 @@ Notas del plan gratuito de Render:
 - **Almacenamiento del token**: el JWT se guarda en `localStorage`, lo que es sencillo pero lo expone si un atacante logra ejecutar código en la página (XSS). La alternativa más segura serían las cookies `httpOnly`.
 - **Validez del token**: el token se valida únicamente por su firma y caducidad, por lo que un cambio de rol surte efecto cuando el usuario vuelve a iniciar sesión o el token caduca.
 - **Secretos**: el archivo `.env` está excluido del repositorio. Las plantillas `.env.example` indican las variables necesarias sin incluir valores reales.
+- **Cabeceras HTTP**: el backend usa Helmet para añadir cabeceras de seguridad y ocultar que funciona con Express.
+- **Control del gasto**: la identificación mediante fotografías está limitada a 30 peticiones por hora y usuario, y solo pueden usarla los administradores. Los contadores se guardan en memoria y se reinician con el servidor.
 
 ## Solución de problemas
 
@@ -222,8 +225,8 @@ Notas del plan gratuito de Render:
 - [x] Cuentas de usuario y autenticación (también necesarias para proteger el endpoint de pago de identificación mediante fotografías).
 - [x] Limitación de solicitudes (Rate limiting) en los endpoints de autenticación.
 - [x] Despliegue de la aplicación.
-- [ ] Base de datos separada para desarrollo y producción.
-- [ ] Refuerzo de seguridad (cabeceras HTTP con Helmet y límite de uso en el endpoint de identificación).
+- [x] Base de datos separada para desarrollo y producción.
+- [x] Refuerzo de seguridad (cabeceras HTTP con Helmet y límite de uso en el endpoint de identificación).
 - [ ] Carrito de compra y gestión de pedidos.
 
 ## Créditos
