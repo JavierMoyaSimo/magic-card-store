@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { useAuth } from "../auth/useAuth.js";
+import { useCart } from "../cart/useCart.js";
 import { apiUrl } from "../api.js";
 
 function CardItem({ card, onChanged }) {
   const { token, isAdmin } = useAuth();
+  const { items, addItem } = useCart();
+  const inCart = items.find((item) => item.cardId === card._id)?.quantity ?? 0;
   const [isEditing, setIsEditing] = useState(false);
   const [price, setPrice] = useState(String(card.price));
   const [stock, setStock] = useState(String(card.stock));
@@ -138,6 +141,20 @@ function CardItem({ card, onChanged }) {
           <p>Estado: {card.condition}</p>
           <p className="price">{card.price.toFixed(2)} €</p>
           <p>Stock: {card.stock}</p>
+          {card.stock > 0 ? (
+            <button
+              type="button"
+              className="add-to-cart"
+              onClick={() => addItem(card)}
+              disabled={inCart >= card.stock}
+            >
+              {inCart >= card.stock
+                ? "Máximo en el carrito"
+                : "Añadir al carrito"}
+            </button>
+          ) : (
+            <p className="out-of-stock">Agotada</p>
+          )}
           {isAdmin && (
             <div className="card-actions">
               <button type="button" onClick={startEditing} disabled={busy}>
