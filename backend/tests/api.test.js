@@ -217,3 +217,61 @@ describe("Auth endpoints", () => {
     assert.equal(res.status, 401);
   });
 });
+
+describe("Orders", () => {
+  test("POST /api/orders sin sesión devuelve 401", async () => {
+    const res = await request(app).post("/api/orders").send({ items: [] });
+
+    assert.equal(res.status, 401);
+  });
+
+  test("GET /api/orders/mine sin sesión devuelve 401", async () => {
+    const res = await request(app).get("/api/orders/mine");
+
+    assert.equal(res.status, 401);
+  });
+
+  test("Un cliente no puede ver todos los pedidos", async () => {
+    const res = await request(app)
+      .get("/api/orders")
+      .set(authHeader("customer"));
+
+    assert.equal(res.status, 403);
+  });
+
+  test("Un cliente no puede cambiar el estado de un pedido", async () => {
+    const res = await request(app)
+      .patch(`/api/orders/${FAKE_ID}/status`)
+      .set(authHeader("customer"))
+      .send({ status: "shipped" });
+
+    assert.equal(res.status, 403);
+  });
+
+  test("POST /api/orders con el carrito vacío devuelve 400", async () => {
+    const res = await request(app)
+      .post("/api/orders")
+      .set(authHeader("customer"))
+      .send({ items: [] });
+
+    assert.equal(res.status, 400);
+  });
+
+  test("POST /api/orders con una cantidad inválida devuelve 400", async () => {
+    const res = await request(app)
+      .post("/api/orders")
+      .set(authHeader("customer"))
+      .send({ items: [{ cardId: FAKE_ID, quantity: 0 }] });
+
+    assert.equal(res.status, 400);
+  });
+
+  test("PATCH /api/orders/:id/status con un estado inválido devuelve 400", async () => {
+    const res = await request(app)
+      .patch(`/api/orders/${FAKE_ID}/status`)
+      .set(authHeader("admin"))
+      .send({ status: "refunded" });
+
+    assert.equal(res.status, 400);
+  });
+});
