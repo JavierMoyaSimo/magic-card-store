@@ -39,6 +39,8 @@ El catálogo es público y se puede consultar sin iniciar sesión. Para probar e
 - Pruebas automatizadas e integración continua mediante GitHub Actions.
 - Aplicación desplegada en internet (frontend y backend en Render, base de datos en MongoDB Atlas).
 - Seguridad adicional: cabeceras HTTP de protección con Helmet y límite de uso por usuario en la identificación mediante fotografías, que consume saldo de la API de Claude.
+- Carrito de compra guardado en el navegador y pedidos sin pago real: el servidor calcula los precios, comprueba el stock y descuenta las unidades de forma atómica dentro de una transacción.
+- Historial de pedidos para cada usuario y panel de pedidos para el administrador, que puede marcarlos como enviados o cancelarlos (al cancelar, el stock se devuelve a la tienda).
 
 ## Autenticación y roles
 
@@ -54,6 +56,17 @@ El catálogo es público y se puede consultar sin iniciar sesión. Para probar e
 2. El backend comprueba la sesión y el rol, valida el archivo (únicamente imágenes, con un tamaño máximo de 5 MB) y lo envía a Claude junto con una instrucción para obtener exclusivamente el nombre de la carta en formato JSON.
 3. El nombre devuelto se consulta en Scryfall para obtener los datos oficiales de la carta.
 4. El formulario se completa automáticamente y el usuario **revisa el resultado** antes de guardarlo, ya que el reconocimiento mediante IA puede cometer errores.
+
+## Pedidos y gestión del stock
+
+1. El carrito vive en el navegador (`localStorage`) y solo envía al servidor identificadores de cartas y cantidades.
+2. Al confirmar, el backend **ignora cualquier precio enviado por la web**: lee el precio y el stock reales de cada carta en la base de datos.
+3. El descuento de stock se hace con una operación atómica (`findOneAndUpdate` con la condición `stock >= cantidad` y un `$inc`), para que dos clientes no puedan comprar a la vez la última unidad.
+4. Todas las operaciones de un pedido se ejecutan dentro de una **transacción de MongoDB**: o se aplican todas o ninguna.
+5. El pedido guarda una copia del nombre y del precio de cada carta en el momento de la compra, de modo que el historial no cambia si luego se edita o se borra la carta.
+6. Estados del pedido: `pending`, `shipped` y `cancelled`. Solo se puede cambiar un pedido pendiente, y cancelarlo devuelve las unidades al stock.
+
+Esta versión es una demostración: no hay pasarela de pago ni dirección de envío.
 
 ## Tecnologías utilizadas
 
@@ -75,9 +88,9 @@ magic-card-store/
 ├── backend/
 │   ├── src/
 │   │   ├── middleware/  # Autenticación y control de roles (requireAuth, requireAdmin)
-│   │   ├── models/      # Esquemas de Mongoose (Card, User)
+│   │   ├── models/      # Esquemas de Mongoose (Card, User, Order)
 │   │   ├── services/    # Clientes de las APIs de Scryfall y Claude
-│   │   ├── routes/      # Rutas de Express (cartas, Scryfall, identificación, autenticación)
+│   │   ├── routes/      # Rutas de Express(cartas, Scryfall, identificación, autenticación,orders)
 │   │   ├── scripts/     # Scripts de administración (make-admin)
 │   │   ├── app.js       # Aplicación Express (middlewares, CORS y rutas)
 │   │   └── index.js     # Punto de entrada del servidor (conexión a la base de datos)
@@ -85,7 +98,8 @@ magic-card-store/
 ├── frontend/
 │   └── src/
 │       ├── auth/        # Contexto de autenticación (AuthProvider, useAuth)
-│       ├── components/  # AddCardForm, AuthPanel, CardList, CardItem
+│       ├── cart/        # Contexto del carrito 
+│       ├── components/  # AddCardForm, AuthPanel, CardList, CardItem, CartView, OrdersView
 │       ├── api.js       # Construcción de la URL de la API (VITE_API_URL)
 │       └── App.jsx
 └── docs/                # Capturas de pantalla
@@ -107,6 +121,10 @@ magic-card-store/
 | GET    | `/api/scryfall/autocomplete?q=` | Administrador | Obtener sugerencias de nombres de cartas                                             |
 | GET    | `/api/scryfall/search?name=`    | Administrador | Buscar una carta por nombre (búsqueda aproximada)                                    |
 | POST   | `/api/identify`                 | Administrador | Identificar una carta mediante una fotografía (`multipart/form-data`, campo `image`) |
+| POST   | `/api/orders`                   | Sesión        | Crear un pedido (`items`: lista de `cardId` y `quantity`)                            |
+| GET    | `/api/orders/mine`              | Sesión        | Obtener los pedidos del usuario                                                      |
+| GET    | `/api/orders`                   | Administrador | Obtener todos los pedidos                                                            |
+| PATCH  | `/api/orders/:id/status`        | Administrador | Marcar un pedido como enviado (`shipped`) o cancelarlo (`cancelled`)                 |
 
 ## Puesta en marcha
 
@@ -227,7 +245,10 @@ Notas del plan gratuito de Render:
 - [x] Despliegue de la aplicación.
 - [x] Base de datos separada para desarrollo y producción.
 - [x] Refuerzo de seguridad (cabeceras HTTP con Helmet y límite de uso en el endpoint de identificación).
-- [ ] Carrito de compra y gestión de pedidos.
+- [x] Carrito de compra y gestión de pedidos (sin pasarela de pago).
+- [ ] Pasarela de pago en modo de pruebas (Stripe).
+- [ ] Dirección de envío y notificaciones por email.
+- [ ] Rutas de navegación con React Router y paginación del catálogo.
 
 ## Créditos
 
