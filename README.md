@@ -4,6 +4,16 @@
 
 Una aplicación web full-stack para gestionar una tienda online de cartas de _Magic: The Gathering_, inspirada en CardMarket. Escribe el nombre de una carta o sube una fotografía de ella y la aplicación obtiene automáticamente sus datos e imagen oficiales.
 
+## Demo en vivo
+
+**https://magic-card-store-1.onrender.com**
+
+El catálogo es público y se puede consultar sin iniciar sesión. Para probar el resto de funcionalidades, puedes crear una cuenta de cliente desde la propia web.
+
+> La aplicación está alojada en el plan gratuito de Render: si nadie la ha usado en los últimos 15 minutos, el servidor se duerme y la primera carga puede tardar alrededor de un minuto en responder.
+
+## Capturas de pantalla
+
 ![Catálogo público de la tienda](docs/screenshot0.png)
 
 ![Inicio de sesión y registro](docs/screenshot1.png)
@@ -27,6 +37,7 @@ Una aplicación web full-stack para gestionar una tienda online de cartas de _Ma
 - Editar el precio, el stock y el estado de conservación, así como eliminar cartas.
 - Protección contra duplicados: no se puede añadir dos veces la misma carta.
 - Pruebas automatizadas e integración continua mediante GitHub Actions.
+- Aplicación desplegada en internet (frontend y backend en Render, base de datos en MongoDB Atlas).
 
 ## Autenticación y roles
 
@@ -53,6 +64,7 @@ Una aplicación web full-stack para gestionar una tienda online de cartas de _Ma
 | Autenticación y seguridad      | JSON Web Tokens (`jsonwebtoken`), bcrypt (`bcryptjs`), `express-rate-limit` |
 | APIs externas                  | Scryfall (datos de cartas), Claude API (reconocimiento de imágenes)         |
 | Pruebas e integración continua | `node:test`, Supertest, GitHub Actions                                      |
+| Despliegue                     | Render (Web Service y Static Site), MongoDB Atlas                           |
 
 ## Estructura del proyecto
 
@@ -66,15 +78,16 @@ magic-card-store/
 │   │   ├── services/    # Clientes de las APIs de Scryfall y Claude
 │   │   ├── routes/      # Rutas de Express (cartas, Scryfall, identificación, autenticación)
 │   │   ├── scripts/     # Scripts de administración (make-admin)
-│   │   ├── app.js       # Aplicación Express (middlewares y rutas)
+│   │   ├── app.js       # Aplicación Express (middlewares, CORS y rutas)
 │   │   └── index.js     # Punto de entrada del servidor (conexión a la base de datos)
 │   └── tests/           # Pruebas de la API
 ├── frontend/
 │   └── src/
 │       ├── auth/        # Contexto de autenticación (AuthProvider, useAuth)
 │       ├── components/  # AddCardForm, AuthPanel, CardList, CardItem
+│       ├── api.js       # Construcción de la URL de la API (VITE_API_URL)
 │       └── App.jsx
-└── docs/
+└── docs/                # Capturas de pantalla
 ```
 
 ## Endpoints de la API
@@ -113,19 +126,27 @@ cp backend/.env.example backend/.env   # Después, edita backend/.env con tus pr
 npm run dev
 ```
 
-La API estará disponible en `http://localhost:5000` y la aplicación en `http://localhost:5173`. Vite redirige las peticiones a `/api` hacia el backend.
+La API estará disponible en `http://localhost:5000` y la aplicación en `http://localhost:5173`. En desarrollo, Vite redirige las peticiones a `/api` hacia el backend.
 
 ### Variables de entorno
 
-Definidas en `backend/.env`:
+**Backend** (`backend/.env`):
 
-| Variable            | Descripción                                                                                        |
-| ------------------- | -------------------------------------------------------------------------------------------------- |
-| `MONGODB_URI`       | Cadena de conexión de MongoDB Atlas, incluyendo el nombre de la base de datos                      |
-| `PORT`              | Puerto del backend (por defecto, `5000`)                                                           |
-| `JWT_SECRET`        | Cadena larga y aleatoria utilizada para firmar los tokens de autenticación (obligatoria)           |
-| `ANTHROPIC_API_KEY` | Clave API de Claude, utilizada para la funcionalidad de identificación mediante fotografías        |
-| `CLAUDE_MODEL`      | Opcional. Modelo de Claude utilizado para identificar las cartas (por defecto, `claude-haiku-5-5`) |
+| Variable            | Descripción                                                                                              |
+| ------------------- | -------------------------------------------------------------------------------------------------------- |
+| `MONGODB_URI`       | Cadena de conexión de MongoDB Atlas, incluyendo el nombre de la base de datos                            |
+| `JWT_SECRET`        | Cadena larga y aleatoria utilizada para firmar los tokens de autenticación (obligatoria)                 |
+| `ANTHROPIC_API_KEY` | Clave API de Claude, utilizada para la funcionalidad de identificación mediante fotografías              |
+| `FRONTEND_URL`      | Dirección o direcciones (separadas por comas) desde las que se permite llamar a la API (CORS)            |
+| `NODE_ENV`          | `production` en el entorno desplegado; activa la confianza en el proxy para detectar la IP del visitante |
+| `PORT`              | Puerto del backend (por defecto, `5000`). En Render lo asigna la propia plataforma                       |
+| `CLAUDE_MODEL`      | Opcional. Modelo de Claude utilizado para identificar las cartas (por defecto, `claude-haiku-5-5`)       |
+
+**Frontend** (`frontend/.env`, opcional en desarrollo):
+
+| Variable       | Descripción                                                                                   |
+| -------------- | --------------------------------------------------------------------------------------------- |
+| `VITE_API_URL` | Dirección pública del backend. En desarrollo se deja vacía y Vite redirige `/api` al servidor |
 
 Para generar un valor seguro de `JWT_SECRET`:
 
@@ -154,12 +175,35 @@ npm test
 
 Las pruebas comprueban los permisos (respuestas `401` y `403`) y las validaciones de la API, y no necesitan una base de datos ni claves API. También se ejecutan automáticamente en cada `push` mediante GitHub Actions.
 
+## Despliegue
+
+La aplicación se compone de tres piezas independientes:
+
+| Pieza         | Plataforma                    | Configuración                                                                                |
+| ------------- | ----------------------------- | -------------------------------------------------------------------------------------------- |
+| Base de datos | MongoDB Atlas (plan gratuito) | Usuario con permisos `readWrite` solo sobre la base de datos de la tienda                    |
+| Backend       | Render, _Web Service_         | Root Directory `backend`, Build `npm install`, Start `npm start`, Health Check `/api/health` |
+| Frontend      | Render, _Static Site_         | Root Directory `frontend`, Build `npm install && npm run build`, Publish Directory `dist`    |
+
+Pasos resumidos:
+
+1. **Atlas**: crear un usuario de base de datos específico para producción y permitir el acceso desde cualquier IP en _Network Access_ (el servidor de Render no tiene una IP fija; la protección recae en el usuario y la contraseña).
+2. **Backend**: crear el _Web Service_ con las variables `NODE_ENV=production`, `NODE_VERSION`, `MONGODB_URI`, `JWT_SECRET`, `ANTHROPIC_API_KEY` y `FRONTEND_URL` (con la dirección del frontend). Los valores de producción deben ser distintos a los de desarrollo.
+3. **Frontend**: crear el _Static Site_ con `VITE_API_URL` (con la dirección del backend) y `NODE_VERSION`. Esta variable se incorpora al construir la web, por lo que, si cambia, hay que volver a desplegar.
+4. Comprobar que el backend responde en `/api/health` y que las peticiones del frontend no se bloquean por CORS.
+
+Notas del plan gratuito de Render:
+
+- El backend se duerme tras 15 minutos sin tráfico y tarda alrededor de un minuto en volver a arrancar.
+- El sistema de archivos es efímero. No afecta a esta aplicación: las fotografías se procesan en memoria y todos los datos se guardan en Atlas.
+
 ## Notas de seguridad
 
 - **Protección en el servidor**: la web oculta los controles de administración por comodidad, pero la protección real está en el backend, que comprueba el token y el rol en cada petición.
+- **CORS restringido**: el backend solo acepta peticiones del navegador desde las direcciones indicadas en `FRONTEND_URL`.
 - **Almacenamiento del token**: el JWT se guarda en `localStorage`, lo que es sencillo pero lo expone si un atacante logra ejecutar código en la página (XSS). La alternativa más segura serían las cookies `httpOnly`.
 - **Validez del token**: el token se valida únicamente por su firma y caducidad, por lo que un cambio de rol surte efecto cuando el usuario vuelve a iniciar sesión o el token caduca.
-- **Secretos**: el archivo `.env` está excluido del repositorio. La plantilla `backend/.env.example` indica las variables necesarias sin incluir valores reales.
+- **Secretos**: el archivo `.env` está excluido del repositorio. Las plantillas `.env.example` indican las variables necesarias sin incluir valores reales.
 
 ## Solución de problemas
 
@@ -169,6 +213,7 @@ Las pruebas comprueban los permisos (respuestas `401` y `403`) y las validacione
 - **Tras ejecutar `make-admin` no aparecen los controles de administración**: cierra sesión y vuelve a iniciarla, ya que el rol viaja dentro del token.
 - **La identificación mediante fotografías falla con un error de autenticación**: comprueba que `ANTHROPIC_API_KEY` esté configurada en `backend/.env` y reinicia el backend.
 - **Los comandos `curl` fallan en PowerShell**: en PowerShell `curl` es un alias de otro comando. Usa Git Bash o `Invoke-RestMethod`.
+- **Error de CORS en la aplicación desplegada**: comprueba que `FRONTEND_URL` coincide exactamente con la dirección del frontend (con `https://` y sin barra final) y que `VITE_API_URL` apunta a un backend que existe. Si el backend estaba dormido, el error puede aparecer como CORS aunque la configuración sea correcta; espera a que arranque y recarga.
 
 ## Próximas mejoras
 
@@ -176,8 +221,10 @@ Las pruebas comprueban los permisos (respuestas `401` y `403`) y las validacione
 - [x] Pruebas automatizadas e integración continua.
 - [x] Cuentas de usuario y autenticación (también necesarias para proteger el endpoint de pago de identificación mediante fotografías).
 - [x] Limitación de solicitudes (Rate limiting) en los endpoints de autenticación.
+- [x] Despliegue de la aplicación.
+- [ ] Base de datos separada para desarrollo y producción.
+- [ ] Refuerzo de seguridad (cabeceras HTTP con Helmet y límite de uso en el endpoint de identificación).
 - [ ] Carrito de compra y gestión de pedidos.
-- [ ] Despliegue de la aplicación.
 
 ## Créditos
 
