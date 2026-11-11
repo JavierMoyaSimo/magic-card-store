@@ -396,3 +396,131 @@ body {
 .status.cancelled {
   background: #777;
 }
+
+.filter-bar {
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.filter-bar .search-input {
+  margin-bottom: 12px;
+}
+
+.filter-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.filter-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 160px;
+  font-size: 0.9rem;
+}
+
+.filter-row select {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+  background: #fff;
+}
+
+.color-filter {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 0.9rem;
+}
+
+.color-chips {
+  display: flex;
+  gap: 8px;
+}
+
+.mana {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  font-weight: bold;
+  color: #fff;
+  cursor: pointer;
+  opacity: 0.55;
+}
+
+.mana.active {
+  opacity: 1;
+  border-color: #222;
+}
+
+.mana-W {
+  background: #f3eec3;
+  color: #333;
+}
+
+.mana-U {
+  background: #2b7bbf;
+}
+
+.mana-B {
+  background: #2d2d2d;
+}
+
+.mana-R {
+  background: #c8402b;
+}
+
+.mana-G {
+  background: #2e8b57;
+}
+
+.mana-C {
+  background: #9a9a9a;
+}
+
+.results-count {
+  color: #555;
+  font-size: 0.9rem;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 24px 0;
+}
+
+.pagination button {
+  min-width: 38px;
+  padding: 8px 12px;
+  border: 1px solid #2b5fd9;
+  border-radius: 6px;
+  background: #fff;
+  color: #2b5fd9;
+  cursor: pointer;
+}
+
+.pagination button.active {
+  background: #2b5fd9;
+  color: #fff;
+}
+
+.pagination button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pagination .gap {
+  padding: 0 4px;
+}
