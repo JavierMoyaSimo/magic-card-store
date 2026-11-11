@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import Card from "../models/Card.js";
 import { findCardByName } from "../services/scryfall.js";
 import { requireAuth, requireAdmin } from "../middleware/auth.js";
+import { buildCardQuery } from "../utils/cardQuery.js";
 
 const router = Router();
 
@@ -20,11 +21,6 @@ function handleError(res, error) {
     return res.status(400).json({ error: error.message });
   }
   res.status(error.status || 500).json({ error: error.message });
-}
-
-// Escapa los símbolos especiales para poder usar el texto del usuario en una búsqueda segura
-function escapeRegex(text) {
-  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 // CREATE: POST /api/cards
@@ -66,15 +62,27 @@ router.post("/", requireAuth, requireAdmin, async (req, res) => {
 });
 
 // READ (lista): GET /api/cards  o  GET /api/cards?search=bolt
+// READ (lista): GET /api/cards?search=&type=&colors=&manaValue=&sort=&page=&limit=
 router.get("/", async (req, res) => {
-  const { search } = req.query;
-  const filter = search
-    ? { name: { $regex: escapeRegex(search), $options: "i" } }
-    : {};
+  const {
+    filter,
+    sort,
+    page: requestedPage,
+    limit,
+  } = buildCardQuery(req.query);
 
   try {
-    const cards = await Card.find(filter).sort({ name: 1 });
-    res.json(cards);
+    const total = await Card.countDocuments(filter);
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+    // Si piden una página que ya no existe (por ejemplo, tras borrar), usamos la última
+    const page = Math.min(requestedPage, totalPages);
+
+    const cards = await Card.find(filter)
+      .sort(sort)
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    res.json({ cards, page, limit, total, totalPages });
   } catch (error) {
     handleError(res, error);
   }

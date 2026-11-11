@@ -8,7 +8,8 @@
     "dev": "node --watch src/index.js",
     "start": "node src/index.js",
     "test": "node --test",
-    "make-admin": "node src/scripts/makeAdmin.js"
+    "make-admin": "node src/scripts/makeAdmin.js",
+    "backfill": "node src/scripts/backfillCards.js"
   },
   "keywords": [],
   "author": "",

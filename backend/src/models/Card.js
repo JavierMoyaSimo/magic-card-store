@@ -9,6 +9,8 @@ const cardSchema = new mongoose.Schema(
     setName: { type: String },
     collectorNumber: { type: String },
     typeLine: { type: String },
+    colors: { type: [String], default: [] },
+    manaValue: { type: Number, min: 0, default: 0 },
     manaCost: { type: String, default: "" },
     oracleText: { type: String, default: "" },
     rarity: { type: String },

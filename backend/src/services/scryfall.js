@@ -32,6 +32,8 @@ function simplifyCard(card) {
     setName: card.set_name,
     collectorNumber: card.collector_number,
     typeLine: card.type_line,
+    colors: card.colors ?? firstFace?.colors ?? [], //Las cartas de doble cara guardan sus colores dentro de cada cara.
+    manaValue: card.cmc ?? 0,
     manaCost: card.mana_cost ?? firstFace?.mana_cost ?? "",
     oracleText: card.oracle_text ?? firstFace?.oracle_text ?? "",
     rarity: card.rarity,
@@ -53,4 +55,10 @@ export async function autocompleteCardName(query) {
     `/cards/autocomplete?q=${encodeURIComponent(query)}`,
   );
   return data.data;
+}
+
+// Busca una carta por su identificador de Scryfall
+export async function findCardById(id) {
+  const data = await scryfallGet(`/cards/${encodeURIComponent(id)}`);
+  return simplifyCard(data);
 }
