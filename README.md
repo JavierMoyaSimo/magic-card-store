@@ -41,6 +41,7 @@ El catálogo es público y se puede consultar sin iniciar sesión. Para probar e
 - Seguridad adicional: cabeceras HTTP de protección con Helmet y límite de uso por usuario en la identificación mediante fotografías, que consume saldo de la API de Claude.
 - Carrito de compra guardado en el navegador y pedidos sin pago real: el servidor calcula los precios, comprueba el stock y descuenta las unidades de forma atómica dentro de una transacción.
 - Historial de pedidos para cada usuario y panel de pedidos para el administrador, que puede marcarlos como enviados o cancelarlos (al cancelar, el stock se devuelve a la tienda).
+- Filtros del catálogo por tipo de carta, color de maná y coste de maná, con ordenación y paginación. Los filtros se guardan en la dirección web, por lo que se pueden compartir.
 
 ## Autenticación y roles
 
@@ -91,6 +92,7 @@ magic-card-store/
 │   │   ├── models/      # Esquemas de Mongoose (Card, User, Order)
 │   │   ├── services/    # Clientes de las APIs de Scryfall y Claude
 │   │   ├── routes/      # Rutas de Express(cartas, Scryfall, identificación, autenticación,orders)
+│   │   ├── utils/       # Traducción de filtros a consultas de MongoDB
 │   │   ├── scripts/     # Scripts de administración (make-admin)
 │   │   ├── app.js       # Aplicación Express (middlewares, CORS y rutas)
 │   │   └── index.js     # Punto de entrada del servidor (conexión a la base de datos)
@@ -98,9 +100,10 @@ magic-card-store/
 ├── frontend/
 │   └── src/
 │       ├── auth/        # Contexto de autenticación (AuthProvider, useAuth)
-│       ├── cart/        # Contexto del carrito 
-│       ├── components/  # AddCardForm, AuthPanel, CardList, CardItem, CartView, OrdersView
+│       ├── cart/        # Contexto del carrito
+│       ├── components/  # AddCardForm, AuthPanel, CardList, CardItem, CartView, OrdersView, FilterBar, Pagination
 │       ├── api.js       # Construcción de la URL de la API (VITE_API_URL)
+│       ├── filters.js   # Filtros por color, tipo, coste de maná
 │       └── App.jsx
 └── docs/                # Capturas de pantalla
 ```
@@ -108,12 +111,12 @@ magic-card-store/
 ## Endpoints de la API
 
 | Método | Endpoint                        | Acceso        | Descripción                                                                          |
-| ------ | ------------------------------- | ------------- | ------------------------------------------------------------------------------------ |
+| ------ | ------------------------------- | ------------- | ------------------------------------------------------------------------------------ | --- |
 | GET    | `/api/health`                   | Público       | Comprobar el estado del servidor                                                     |
 | POST   | `/api/auth/register`            | Público       | Crear una cuenta de cliente (`email`, `password`)                                    |
 | POST   | `/api/auth/login`               | Público       | Iniciar sesión y recibir un JWT                                                      |
 | GET    | `/api/auth/me`                  | Sesión        | Obtener el usuario asociado al token                                                 |
-| GET    | `/api/cards?search=`            | Público       | Obtener las cartas de la tienda, con filtro opcional por nombre                      |
+| GET    | `/api/cards`                    | Público       | Obtener las cartas de la tienda con filtros, ordenación y paginación (ver más abajo) |     |
 | GET    | `/api/cards/:id`                | Público       | Obtener una carta concreta                                                           |
 | POST   | `/api/cards`                    | Administrador | Añadir una carta (`name`, `price`, `stock`, `condition`)                             |
 | PUT    | `/api/cards/:id`                | Administrador | Actualizar el `price`, `stock` o `condition`                                         |
@@ -125,6 +128,20 @@ magic-card-store/
 | GET    | `/api/orders/mine`              | Sesión        | Obtener los pedidos del usuario                                                      |
 | GET    | `/api/orders`                   | Administrador | Obtener todos los pedidos                                                            |
 | PATCH  | `/api/orders/:id/status`        | Administrador | Marcar un pedido como enviado (`shipped`) o cancelarlo (`cancelled`)                 |
+
+### Filtros, ordenación y paginación de `GET /api/cards`
+
+| Parámetro   | Valores                                                                                                          |
+| ----------- | ---------------------------------------------------------------------------------------------------------------- |
+| `search`    | Texto contenido en el nombre de la carta                                                                         |
+| `type`      | `creature`, `land`, `instant`, `sorcery`, `artifact`, `enchantment` o `planeswalker`                             |
+| `colors`    | Lista separada por comas de `W`, `U`, `B`, `R`, `G` y `C` (incolora); devuelve las cartas de cualquiera de ellos |
+| `manaValue` | Número entero; el `7` significa «7 o más»                                                                        |
+| `sort`      | `name`, `price-asc`, `price-desc`, `mana-asc` o `newest`                                                         |
+| `page`      | Número de página (por defecto, `1`)                                                                              |
+| `limit`     | Cartas por página (por defecto, `12`; máximo, `50`)                                                              |
+
+La respuesta tiene la forma `{ cards, page, limit, total, totalPages }`. Los parámetros se validan con listas blancas y solo se aceptan textos, para evitar inyecciones de operadores de MongoDB. La traducción de parámetros a consulta está en `backend/src/utils/cardQuery.js` y tiene sus propios tests.
 
 ## Puesta en marcha
 
@@ -246,6 +263,7 @@ Notas del plan gratuito de Render:
 - [x] Base de datos separada para desarrollo y producción.
 - [x] Refuerzo de seguridad (cabeceras HTTP con Helmet y límite de uso en el endpoint de identificación).
 - [x] Carrito de compra y gestión de pedidos (sin pasarela de pago).
+- [x] Filtros por tipo, color y coste de maná, ordenación y paginación del catálogo.
 - [ ] Pasarela de pago en modo de pruebas (Stripe).
 - [ ] Dirección de envío y notificaciones por email.
 - [ ] Rutas de navegación con React Router y paginación del catálogo.
