@@ -42,6 +42,8 @@ El catálogo es público y se puede consultar sin iniciar sesión. Para probar e
 - Carrito de compra guardado en el navegador y pedidos sin pago real: el servidor calcula los precios, comprueba el stock y descuenta las unidades de forma atómica dentro de una transacción.
 - Historial de pedidos para cada usuario y panel de pedidos para el administrador, que puede marcarlos como enviados o cancelarlos (al cancelar, el stock se devuelve a la tienda).
 - Filtros del catálogo por tipo de carta, color de maná y coste de maná, con ordenación y paginación. Los filtros se guardan en la dirección web, por lo que se pueden compartir.
+- Diseño propio con tema oscuro de inspiración fantástica, construido con variables CSS, adaptado a móvil y con navegación accesible por teclado.
+- Sección de carta destacada: una carta al azar con stock, mostrada con su imagen completa y sin modificar.
 
 ## Autenticación y roles
 
@@ -101,7 +103,7 @@ magic-card-store/
 │   └── src/
 │       ├── auth/        # Contexto de autenticación (AuthProvider, useAuth)
 │       ├── cart/        # Contexto del carrito
-│       ├── components/  # AddCardForm, AuthPanel, CardList, CardItem, CartView, OrdersView, FilterBar, Pagination
+│       ├── components/  # AddCardForm, AuthPanel, CardList, CardItem, CartView, OrdersView, FilterBar, Pagination, FeaturedCard
 │       ├── api.js       # Construcción de la URL de la API (VITE_API_URL)
 │       ├── filters.js   # Filtros por color, tipo, coste de maná
 │       └── App.jsx
@@ -117,6 +119,7 @@ magic-card-store/
 | POST   | `/api/auth/login`               | Público       | Iniciar sesión y recibir un JWT                                                      |
 | GET    | `/api/auth/me`                  | Sesión        | Obtener el usuario asociado al token                                                 |
 | GET    | `/api/cards`                    | Público       | Obtener las cartas de la tienda con filtros, ordenación y paginación (ver más abajo) |     |
+| GET    | `/api/cards/featured`           | Público       | Obtener una carta al azar que tenga stock e imagen                                   |
 | GET    | `/api/cards/:id`                | Público       | Obtener una carta concreta                                                           |
 | POST   | `/api/cards`                    | Administrador | Añadir una carta (`name`, `price`, `stock`, `condition`)                             |
 | PUT    | `/api/cards/:id`                | Administrador | Actualizar el `price`, `stock` o `condition`                                         |
@@ -243,6 +246,14 @@ Notas del plan gratuito de Render:
 - **Cabeceras HTTP**: el backend usa Helmet para añadir cabeceras de seguridad y ocultar que funciona con Express.
 - **Control del gasto**: la identificación mediante fotografías está limitada a 30 peticiones por hora y usuario, y solo pueden usarla los administradores. Los contadores se guardan en memoria y se reinician con el servidor.
 
+## Diseño y uso de imágenes
+
+cre
+
+- El tema visual está hecho solo con CSS (degradados, texturas y una paleta basada en los cinco colores de maná), sin imágenes de terceros como fondo.
+- Las imágenes de las cartas se muestran completas y sin modificar (sin filtros, capas ni recortes), siguiendo las normas de uso de imágenes de Scryfall. Los efectos al pasar el ratón se aplican al marco de la carta, no a la imagen.
+- La interfaz incluye un pie con los créditos y el aviso legal.
+
 ## Solución de problemas
 
 - **Error `querySrv ECONNREFUSED` al conectar con MongoDB**: algunas redes bloquean las consultas DNS SRV utilizadas por las URL `mongodb+srv://`. El backend configura servidores DNS públicos (Google y Cloudflare) en `src/index.js` para solucionar este problema.
@@ -271,6 +282,7 @@ Notas del plan gratuito de Render:
 ## Créditos
 
 Los datos e imágenes de las cartas son proporcionados por [Scryfall](https://scryfall.com). _Magic: The Gathering_ es una marca registrada de Wizards of the Coast. Este es un proyecto de fans no oficial y no está afiliado ni cuenta con el respaldo de Wizards of the Coast o Scryfall.
+La tipografía de los títulos es [Cinzel](https://fonts.google.com/specimen/Cinzel), de Google Fonts.
 
 ## Licencia
 
