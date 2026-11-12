@@ -88,6 +88,19 @@ router.get("/", async (req, res) => {
   }
 });
 
+// GET /api/cards/featured   Una carta al azar que tenga stock e imagen
+router.get("/featured", async (req, res) => {
+  try {
+    const [card] = await Card.aggregate([
+      { $match: { stock: { $gt: 0 }, imageUrl: { $type: "string" } } },
+      { $sample: { size: 1 } },
+    ]);
+    res.json(card ?? null);
+  } catch (error) {
+    handleError(res, error);
+  }
+});
+
 // READ (una carta): GET /api/cards/:id
 router.get("/:id", async (req, res) => {
   try {

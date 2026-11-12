@@ -6,6 +6,7 @@ import CartView from "./components/CartView.jsx";
 import OrdersView from "./components/OrdersView.jsx";
 import FilterBar from "./components/FilterBar.jsx";
 import Pagination from "./components/Pagination.jsx";
+import FeaturedCard from "./components/FeaturedCard.jsx";
 import { useAuth } from "./auth/useAuth.js";
 import { useCart } from "./cart/useCart.js";
 import { apiUrl } from "./api.js";
@@ -135,7 +136,16 @@ function App() {
   return (
     <div className="container">
       <header className="app-header">
-        <h1>Magic Card Store</h1>
+        <div className="brand">
+          <h1>Magic Card Store</h1>
+          <div className="mana-pips" aria-hidden="true">
+            <span className="pip pip-W" />
+            <span className="pip pip-U" />
+            <span className="pip pip-B" />
+            <span className="pip pip-R" />
+            <span className="pip pip-G" />
+          </div>
+        </div>
 
         <div className="auth-area">
           {user ? (
@@ -195,6 +205,7 @@ function App() {
 
       {currentView === "catalog" && (
         <>
+          <FeaturedCard onSelect={(name) => updateFilters({ search: name })} />
           {isAdmin && <AddCardForm onCardAdded={reloadCards} />}
 
           <FilterBar
@@ -242,6 +253,17 @@ function App() {
       )}
 
       {currentView === "admin-orders" && <OrdersView key="admin" admin />}
+      <footer className="app-footer">
+        <p>
+          Datos e imágenes de las cartas:{" "}
+          <a href="https://scryfall.com" target="_blank" rel="noreferrer">
+            Scryfall
+          </a>
+          . <em>Magic: The Gathering</em> es una marca de Wizards of the Coast.
+          Este es un proyecto de aficionados, no oficial y sin afiliación con
+          Wizards of the Coast ni con Scryfall.
+        </p>
+      </footer>
     </div>
   );
 }
