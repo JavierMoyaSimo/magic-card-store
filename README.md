@@ -44,6 +44,7 @@ El catálogo es público y se puede consultar sin iniciar sesión. Para probar e
 - Filtros del catálogo por tipo de carta, color de maná y coste de maná, con ordenación y paginación. Los filtros se guardan en la dirección web, por lo que se pueden compartir.
 - Diseño propio con tema oscuro de inspiración fantástica, construido con variables CSS, adaptado a móvil y con navegación accesible por teclado.
 - Sección de carta destacada: una carta al azar con stock, mostrada con su imagen completa y sin modificar.
+- Ventana modal de acceso construida con el elemento nativo `<dialog>` (foco atrapado, cierre con Escape) y botón para localizar la carta destacada en el catálogo, con desplazamiento y resaltado.
 
 ## Autenticación y roles
 
