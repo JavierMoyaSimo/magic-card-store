@@ -515,12 +515,14 @@ input::placeholder {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
   gap: 18px;
+  /* Todas las cartas de una fila miden lo mismo de alto */
+  align-items: stretch;
 }
 
 .card {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 10px;
   padding: 12px;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -540,15 +542,41 @@ input::placeholder {
     0 0 18px rgba(212, 168, 75, 0.25);
 }
 
+/* Parte de arriba: imagen y nombre */
+.card-top {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Parte de abajo: se pega al fondo, así precio y botones quedan alineados en toda la fila */
+.card-bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: auto;
+}
+
+/* Reservamos el hueco de la imagen aunque aún no haya cargado, sin deformarla */
 .card img {
   width: 100%;
   height: auto;
+  aspect-ratio: 488 / 680;
+  object-fit: contain;
   border-radius: 4.7% / 3.4%;
 }
 
+/* El nombre ocupa siempre dos líneas de alto; si es más largo se recorta con "…" */
 .card h3 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  min-height: 2.6em;
   margin: 8px 0 0;
   font-size: 1.05rem;
+  line-height: 1.3;
   color: var(--gold-strong);
 }
 
@@ -558,20 +586,46 @@ input::placeholder {
   color: var(--muted);
 }
 
+.card-set {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-condition {
+  padding: 1px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
 p.price {
   margin: 4px 0;
   font-weight: 700;
   color: var(--gold-strong);
 }
 
+.card-meta p.price {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+/* El botón y el aviso de "Agotada" miden lo mismo, para que no cambie la altura de la tarjeta */
+.add-to-cart,
 p.out-of-stock {
-  font-weight: 700;
-  color: var(--error);
+  min-height: 38px;
 }
 
 .add-to-cart {
   width: 100%;
-  margin-top: 4px;
   background: var(--mana-g);
   color: #fff;
 }
@@ -580,10 +634,24 @@ p.out-of-stock {
   background: #38a066;
 }
 
+p.out-of-stock {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--error);
+  border-radius: 8px;
+  font-weight: 700;
+  color: var(--error);
+}
+
 .card-actions {
   display: flex;
   gap: 8px;
   margin-top: 8px;
+}
+
+.card-bottom .card-actions {
+  margin-top: 2px;
 }
 
 .card-actions button {
@@ -741,4 +809,141 @@ p.out-of-stock {
     transition: none !important;
     animation: none !important;
   }
+}
+
+/* ===== Resaltado de la carta tras "Ver en el catálogo" ===== */
+.catalog-section {
+  scroll-margin-top: 16px;
+}
+
+.card.highlight {
+  border-color: var(--gold-strong);
+  animation: card-pulse 1.1s ease-in-out 2;
+}
+
+@keyframes card-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(236, 197, 110, 0);
+  }
+  50% {
+    box-shadow:
+      0 0 0 6px rgba(236, 197, 110, 0.45),
+      0 0 28px rgba(236, 197, 110, 0.5);
+  }
+}
+
+/* ===== Ventana de inicio de sesión ===== */
+.auth-dialog {
+  width: min(420px, calc(100vw - 32px));
+  padding: 0; /* sin relleno: así un clic en el fondo oscuro cuenta como clic fuera del cuadro */
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--gold);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.auth-dialog::backdrop {
+  background: rgba(8, 6, 12, 0.72);
+  backdrop-filter: blur(3px);
+}
+
+/* Mientras hay una ventana abierta, la página de detrás no se desplaza */
+body:has(dialog[open]) {
+  overflow: hidden;
+}
+
+.auth-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+}
+
+.auth-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.auth-header h2 {
+  margin: 0;
+  color: var(--gold-strong);
+}
+
+.auth-close {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-color: transparent;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.auth-close:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.auth-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.auth-tabs button {
+  border-color: transparent;
+  background: transparent;
+  color: var(--muted);
+}
+
+.auth-tabs button:hover:not(.active) {
+  background: var(--surface);
+  color: var(--text);
+}
+
+.auth-tabs button.active {
+  background: var(--gold);
+  color: var(--on-gold);
+}
+
+.auth-intro {
+  margin: 0;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.auth-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.field-hint {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.auth-submit {
+  width: 100%;
+  padding: 12px;
+  font-size: 1rem;
+}
+
+.auth-cancel {
+  align-self: center;
 }

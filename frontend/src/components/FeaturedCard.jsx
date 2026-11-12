@@ -40,7 +40,7 @@ function FeaturedCard({ onSelect }) {
           {card.setName} · {card.typeLine}
         </p>
         <p className="price">{card.price.toFixed(2)} €</p>
-        <button type="button" onClick={() => onSelect(card.name)}>
+        <button type="button" onClick={() => onSelect(card)}>
           Ver en el catálogo
         </button>
       </div>

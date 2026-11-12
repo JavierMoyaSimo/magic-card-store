@@ -3,10 +3,11 @@ import { useAuth } from "../auth/useAuth.js";
 import { useCart } from "../cart/useCart.js";
 import { apiUrl } from "../api.js";
 
-function CardItem({ card, onChanged }) {
+function CardItem({ card, onChanged, highlighted = false }) {
   const { token, isAdmin } = useAuth();
   const { items, addItem } = useCart();
   const inCart = items.find((item) => item.cardId === card._id)?.quantity ?? 0;
+
   const [isEditing, setIsEditing] = useState(false);
   const [price, setPrice] = useState(String(card.price));
   const [stock, setStock] = useState(String(card.stock));
@@ -80,100 +81,120 @@ function CardItem({ card, onChanged }) {
   }
 
   return (
-    <article className="card">
-      {card.imageUrl && <img src={card.imageUrl} alt={card.name} />}
-      <h3>{card.name}</h3>
-      <p>{card.setName}</p>
+    <article
+      id={`card-${card._id}`}
+      className={`card${highlighted ? " highlight" : ""}`}
+    >
+      {/* Parte de arriba: imagen y nombre */}
+      <div className="card-top">
+        {card.imageUrl && (
+          <img src={card.imageUrl} alt={card.name} loading="lazy" />
+        )}
+        <h3 title={card.name}>{card.name}</h3>
+        <p className="card-set" title={card.setName}>
+          {card.setName}
+        </p>
+      </div>
 
-      {isEditing ? (
-        <form className="edit-form" onSubmit={handleSave}>
-          <label>
-            Precio (€)
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              required
-            />
-          </label>
-          <label>
-            Stock
-            <input
-              type="number"
-              min="0"
-              step="1"
-              value={stock}
-              onChange={(e) => setStock(e.target.value)}
-              required
-            />
-          </label>
-          <label>
-            Estado
-            <select
-              value={condition}
-              onChange={(e) => setCondition(e.target.value)}
-            >
-              <option value="NM">NM</option>
-              <option value="LP">LP</option>
-              <option value="MP">MP</option>
-              <option value="HP">HP</option>
-              <option value="DMG">DMG</option>
-            </select>
-          </label>
-          <div className="card-actions">
-            <button type="submit" disabled={busy}>
-              {busy ? "Guardando..." : "Guardar"}
-            </button>
-            <button
-              type="button"
-              className="secondary"
-              onClick={() => setIsEditing(false)}
-              disabled={busy}
-            >
-              Cancelar
-            </button>
-          </div>
-        </form>
-      ) : (
-        <>
-          <p>Estado: {card.condition}</p>
-          <p className="price">{card.price.toFixed(2)} €</p>
-          <p>Stock: {card.stock}</p>
-          {card.stock > 0 ? (
-            <button
-              type="button"
-              className="add-to-cart"
-              onClick={() => addItem(card)}
-              disabled={inCart >= card.stock}
-            >
-              {inCart >= card.stock
-                ? "Máximo en el carrito"
-                : "Añadir al carrito"}
-            </button>
-          ) : (
-            <p className="out-of-stock">Agotada</p>
-          )}
-          {isAdmin && (
+      {/* Parte de abajo: precio, stock y botones, pegada al fondo de la tarjeta */}
+      <div className="card-bottom">
+        {isEditing ? (
+          <form className="edit-form" onSubmit={handleSave}>
+            <label>
+              Precio (€)
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                required
+              />
+            </label>
+            <label>
+              Stock
+              <input
+                type="number"
+                min="0"
+                step="1"
+                value={stock}
+                onChange={(e) => setStock(e.target.value)}
+                required
+              />
+            </label>
+            <label>
+              Estado
+              <select
+                value={condition}
+                onChange={(e) => setCondition(e.target.value)}
+              >
+                <option value="NM">NM</option>
+                <option value="LP">LP</option>
+                <option value="MP">MP</option>
+                <option value="HP">HP</option>
+                <option value="DMG">DMG</option>
+              </select>
+            </label>
             <div className="card-actions">
-              <button type="button" onClick={startEditing} disabled={busy}>
-                Editar
+              <button type="submit" disabled={busy}>
+                {busy ? "Guardando..." : "Guardar"}
               </button>
               <button
                 type="button"
-                className="danger"
-                onClick={handleDelete}
+                className="secondary"
+                onClick={() => setIsEditing(false)}
                 disabled={busy}
               >
-                Eliminar
+                Cancelar
               </button>
             </div>
-          )}
-        </>
-      )}
+          </form>
+        ) : (
+          <>
+            <div className="card-meta">
+              <p className="price">{card.price.toFixed(2)} €</p>
+              <span className="card-condition" title="Estado de conservación">
+                {card.condition}
+              </span>
+            </div>
 
-      {error && <p className="error">{error}</p>}
+            <p className="card-stock">Stock: {card.stock}</p>
+
+            {card.stock > 0 ? (
+              <button
+                type="button"
+                className="add-to-cart"
+                onClick={() => addItem(card)}
+                disabled={inCart >= card.stock}
+              >
+                {inCart >= card.stock
+                  ? "Máximo en el carrito"
+                  : "Añadir al carrito"}
+              </button>
+            ) : (
+              <p className="out-of-stock">Agotada</p>
+            )}
+
+            {isAdmin && (
+              <div className="card-actions">
+                <button type="button" onClick={startEditing} disabled={busy}>
+                  Editar
+                </button>
+                <button
+                  type="button"
+                  className="danger"
+                  onClick={handleDelete}
+                  disabled={busy}
+                >
+                  Eliminar
+                </button>
+              </div>
+            )}
+          </>
+        )}
+
+        {error && <p className="error">{error}</p>}
+      </div>
     </article>
   );
 }

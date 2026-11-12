@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import CardList from "./components/CardList.jsx";
 import AddCardForm from "./components/AddCardForm.jsx";
 import AuthPanel from "./components/AuthPanel.jsx";
@@ -16,6 +16,13 @@ import {
   buildParams,
   readFiltersFromUrl,
 } from "./filters.js";
+
+// Quien prefiere menos animaciones recibe un desplazamiento instantáneo
+function scrollBehavior() {
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ? "auto"
+    : "smooth";
+}
 
 function App() {
   const { user, isAdmin, logout } = useAuth();
@@ -38,6 +45,11 @@ function App() {
   const [filters, setFilters] = useState(readFiltersFromUrl);
   // Cada vez que este número cambia, el efecto vuelve a cargar las cartas
   const [refreshKey, setRefreshKey] = useState(0);
+
+  // Carta que hay que mostrar y resaltar tras pulsar "Ver en el catálogo"
+  const [highlightId, setHighlightId] = useState(null);
+  // Referencia a la zona del catálogo (filtros + resultados), para poder bajar hasta ella
+  const catalogRef = useRef(null);
 
   // Pide las cartas cada vez que cambian los filtros o hay que recargar
   useEffect(() => {
@@ -85,22 +97,50 @@ function App() {
     window.history.replaceState(null, "", url);
   }, [filters]);
 
+  // Cuando la carta pedida ya está en pantalla, bajamos hasta ella y la resaltamos unos segundos
+  useEffect(() => {
+    if (!highlightId) return;
+
+    const element = document.getElementById(`card-${highlightId}`);
+    if (!element) return; // todavía no ha llegado de la API
+
+    element.scrollIntoView({ behavior: scrollBehavior(), block: "center" });
+    const timer = setTimeout(() => setHighlightId(null), 2500);
+
+    return () => clearTimeout(timer);
+  }, [highlightId, cards]);
+
   function reloadCards() {
     setRefreshKey((current) => current + 1);
   }
 
   // Al cambiar cualquier filtro volvemos a la página 1, salvo que el cambio sea de página
   function updateFilters(changes) {
+    setHighlightId(null);
     setFilters((current) => ({ ...current, page: 1, ...changes }));
   }
 
   function resetFilters() {
+    setHighlightId(null);
     setFilters({ ...DEFAULT_FILTERS });
   }
 
   function changePage(page) {
     updateFilters({ page });
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    catalogRef.current?.scrollIntoView({
+      behavior: scrollBehavior(),
+      block: "start",
+    });
+  }
+
+  // "Ver en el catálogo": limpia TODOS los filtros, busca la carta por su nombre y baja hasta ella
+  function showCardInCatalog(card) {
+    setFilters({ ...DEFAULT_FILTERS, search: card.name });
+    setHighlightId(card._id);
+    catalogRef.current?.scrollIntoView({
+      behavior: scrollBehavior(),
+      block: "start",
+    });
   }
 
   const hasFilters =
@@ -205,35 +245,39 @@ function App() {
 
       {currentView === "catalog" && (
         <>
-          <FeaturedCard onSelect={(name) => updateFilters({ search: name })} />
+          <FeaturedCard onSelect={showCardInCatalog} />
+
           {isAdmin && <AddCardForm onCardAdded={reloadCards} />}
 
-          <FilterBar
-            filters={filters}
-            hasFilters={hasFilters}
-            onChange={updateFilters}
-            onReset={resetFilters}
-          />
+          <div ref={catalogRef} className="catalog-section">
+            <FilterBar
+              filters={filters}
+              hasFilters={hasFilters}
+              onChange={updateFilters}
+              onReset={resetFilters}
+            />
 
-          {!loading && !error && (
-            <p className="results-count">
-              {pageInfo.total} {pageInfo.total === 1 ? "carta" : "cartas"}
-            </p>
-          )}
+            {!loading && !error && (
+              <p className="results-count">
+                {pageInfo.total} {pageInfo.total === 1 ? "carta" : "cartas"}
+              </p>
+            )}
 
-          <CardList
-            cards={cards}
-            loading={loading}
-            error={error}
-            hasFilters={hasFilters}
-            onChanged={reloadCards}
-          />
+            <CardList
+              cards={cards}
+              loading={loading}
+              error={error}
+              hasFilters={hasFilters}
+              highlightId={highlightId}
+              onChanged={reloadCards}
+            />
 
-          <Pagination
-            page={pageInfo.page}
-            totalPages={pageInfo.totalPages}
-            onPageChange={changePage}
-          />
+            <Pagination
+              page={pageInfo.page}
+              totalPages={pageInfo.totalPages}
+              onPageChange={changePage}
+            />
+          </div>
         </>
       )}
 
@@ -253,6 +297,7 @@ function App() {
       )}
 
       {currentView === "admin-orders" && <OrdersView key="admin" admin />}
+
       <footer className="app-footer">
         <p>
           Datos e imágenes de las cartas:{" "}

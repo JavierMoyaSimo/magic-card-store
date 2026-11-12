@@ -1,6 +1,13 @@
 import CardItem from "./CardItem.jsx";
 
-function CardList({ cards, loading, error, hasFilters, onChanged }) {
+function CardList({
+  cards,
+  loading,
+  error,
+  hasFilters,
+  highlightId,
+  onChanged,
+}) {
   if (loading) return <p>Cargando cartas...</p>;
   if (error) return <p className="error">{error}</p>;
 
@@ -15,7 +22,12 @@ function CardList({ cards, loading, error, hasFilters, onChanged }) {
   return (
     <div className="card-grid">
       {cards.map((card) => (
-        <CardItem key={card._id} card={card} onChanged={onChanged} />
+        <CardItem
+          key={card._id}
+          card={card}
+          onChanged={onChanged}
+          highlighted={card._id === highlightId}
+        />
       ))}
     </div>
   );
