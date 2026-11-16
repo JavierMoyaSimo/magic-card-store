@@ -249,11 +249,10 @@ Notas del plan gratuito de Render:
 
 ## Diseño y uso de imágenes
 
-cre
-
 - El tema visual está hecho solo con CSS (degradados, texturas y una paleta basada en los cinco colores de maná), sin imágenes de terceros como fondo.
 - Las imágenes de las cartas se muestran completas y sin modificar (sin filtros, capas ni recortes), siguiendo las normas de uso de imágenes de Scryfall. Los efectos al pasar el ratón se aplican al marco de la carta, no a la imagen.
 - La interfaz incluye un pie con los créditos y el aviso legal.
+- La carta destacada se elige con una visita de antelación y se guarda en el navegador junto con su imagen precargada, de modo que aparece al instante. Si no hay ninguna guardada, se muestra un esqueleto de carga que reserva el espacio para evitar saltos de diseño.
 
 ## Solución de problemas
 
