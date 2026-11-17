@@ -246,6 +246,7 @@ Notas del plan gratuito de Render:
 - **Secretos**: el archivo `.env` está excluido del repositorio. Las plantillas `.env.example` indican las variables necesarias sin incluir valores reales.
 - **Cabeceras HTTP**: el backend usa Helmet para añadir cabeceras de seguridad y ocultar que funciona con Express.
 - **Control del gasto**: la identificación mediante fotografías está limitada a 30 peticiones por hora y usuario, y solo pueden usarla los administradores. Los contadores se guardan en memoria y se reinician con el servidor.
+- Reintentos automáticos con espera creciente solo en las peticiones de lectura (GET), para evitar duplicar operaciones que modifican datos, como un pedido.
 
 ## Diseño y uso de imágenes
 
@@ -263,6 +264,7 @@ Notas del plan gratuito de Render:
 - **La identificación mediante fotografías falla con un error de autenticación**: comprueba que `ANTHROPIC_API_KEY` esté configurada en `backend/.env` y reinicia el backend.
 - **Los comandos `curl` fallan en PowerShell**: en PowerShell `curl` es un alias de otro comando. Usa Git Bash o `Invoke-RestMethod`.
 - **Error de CORS en la aplicación desplegada**: comprueba que `FRONTEND_URL` coincide exactamente con la dirección del frontend (con `https://` y sin barra final) y que `VITE_API_URL` apunta a un backend que existe. Si el backend estaba dormido, el error puede aparecer como CORS aunque la configuración sea correcta; espera a que arranque y recarga.
+- **La primera carga tarda o muestra «El servidor se está despertando»**: el backend está en un plan gratuito de Render que se duerme tras 15 minutos sin tráfico. La web reintenta automáticamente las peticiones de lectura durante algo más de un minuto, hasta que el servidor responde.
 
 ## Próximas mejoras
 
