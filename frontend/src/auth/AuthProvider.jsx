@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { AuthContext } from "./AuthContext.js";
-import { apiUrl } from "../api.js";
+import { apiUrl, fetchWithRetry } from "../api.js";
 
 const STORAGE_KEY = "magic-store-token";
 
@@ -35,17 +35,20 @@ export function AuthProvider({ children }) {
     if (!token) return;
 
     let ignore = false;
+    const controller = new AbortController();
 
     async function checkSession() {
       try {
-        const response = await fetch(apiUrl("/api/auth/me"), {
+        // Si el servidor estaba dormido, reintenta hasta que despierte
+        const response = await fetchWithRetry("/api/auth/me", {
           headers: { Authorization: `Bearer ${token}` },
+          signal: controller.signal,
         });
         if (ignore) return;
 
         if (response.ok) {
           const data = await response.json();
-          setUser(data.user);
+          if (!ignore) setUser(data.user);
         } else if (response.status === 401) {
           // Pase caducado o inválido: cerramos la sesión
           localStorage.removeItem(STORAGE_KEY);
@@ -61,6 +64,7 @@ export function AuthProvider({ children }) {
 
     return () => {
       ignore = true;
+      controller.abort();
     };
   }, [token]);
 

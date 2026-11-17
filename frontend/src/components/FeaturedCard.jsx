@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { apiUrl } from "../api.js";
+import { fetchWithRetry } from "../api.js";
 
 const STORAGE_KEY = "magic-store-featured";
 const MAX_AGE_MS = 30 * 60 * 1000; // la carta guardada vale 30 minutos
@@ -67,10 +67,14 @@ function FeaturedCard({ onSelect }) {
 
   useEffect(() => {
     let ignore = false;
+    const controller = new AbortController();
 
     async function loadFeatured() {
       try {
-        const response = await fetch(apiUrl("/api/cards/featured"));
+        // Si el servidor estaba dormido, reintenta en silencio hasta que despierte
+        const response = await fetchWithRetry("/api/cards/featured", {
+          signal: controller.signal,
+        });
         if (!response.ok) throw new Error("Respuesta no válida");
         const data = await response.json();
         if (ignore) return;
@@ -102,6 +106,7 @@ function FeaturedCard({ onSelect }) {
 
     return () => {
       ignore = true;
+      controller.abort();
     };
   }, []);
 

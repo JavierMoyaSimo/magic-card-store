@@ -3,7 +3,7 @@ import { useAuth } from "../auth/useAuth.js";
 import { useCart } from "../cart/useCart.js";
 import { apiUrl } from "../api.js";
 
-function CartView({ onOrderPlaced, onReloadCards, onNeedLogin }) {
+function CartView({ onOrderPlaced, onReloadCards, onNeedLogin, onBrowse }) {
   const { user, token } = useAuth();
   const { items, total, setQuantity, removeItem, clearCart } = useCart();
   const [busy, setBusy] = useState(false);
@@ -51,10 +51,20 @@ function CartView({ onOrderPlaced, onReloadCards, onNeedLogin }) {
 
   return (
     <section className="panel">
-      <h2>Tu carrito</h2>
+      <div className="panel-heading">
+        <h2>Tu carrito</h2>
+        <button type="button" className="link-button" onClick={onBrowse}>
+          ← Seguir comprando
+        </button>
+      </div>
 
       {items.length === 0 ? (
-        <p>El carrito está vacío.</p>
+        <div className="empty-state">
+          <p>El carrito está vacío.</p>
+          <button type="button" onClick={onBrowse}>
+            Ver el catálogo
+          </button>
+        </div>
       ) : (
         <>
           <ul className="cart-list">

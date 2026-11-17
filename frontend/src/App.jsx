@@ -7,9 +7,11 @@ import OrdersView from "./components/OrdersView.jsx";
 import FilterBar from "./components/FilterBar.jsx";
 import Pagination from "./components/Pagination.jsx";
 import FeaturedCard from "./components/FeaturedCard.jsx";
+import SiteHeader from "./components/SiteHeader.jsx";
+import CartToast from "./components/CartToast.jsx";
 import { useAuth } from "./auth/useAuth.js";
 import { useCart } from "./cart/useCart.js";
-import { apiUrl } from "./api.js";
+import { fetchWithRetry } from "./api.js";
 import {
   DEFAULT_FILTERS,
   PAGE_SIZE,
@@ -26,7 +28,7 @@ function scrollBehavior() {
 
 function App() {
   const { user, isAdmin, logout } = useAuth();
-  const { count } = useCart();
+  const { lastAdded } = useCart();
 
   // Pantalla actual: "catalog", "cart", "orders" o "admin-orders"
   const [view, setView] = useState("catalog");
@@ -41,6 +43,8 @@ function App() {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  // true mientras se reintenta porque el servidor gratuito de Render está despertando
+  const [waking, setWaking] = useState(false);
   // Los filtros se leen de la dirección al abrir la página
   const [filters, setFilters] = useState(readFiltersFromUrl);
   // Cada vez que este número cambia, el efecto vuelve a cargar las cartas
@@ -55,15 +59,25 @@ function App() {
   useEffect(() => {
     // Evita que una respuesta antigua pise a una más reciente
     let ignore = false;
+    // Permite cancelar los reintentos pendientes si cambian los filtros
+    const controller = new AbortController();
 
     async function loadCards() {
       try {
         const params = buildParams(filters);
         params.set("limit", String(PAGE_SIZE));
 
-        const response = await fetch(apiUrl(`/api/cards?${params}`));
+        const response = await fetchWithRetry(
+          `/api/cards?${params}`,
+          { signal: controller.signal },
+          {
+            onRetry: () => {
+              if (!ignore) setWaking(true);
+            },
+          },
+        );
         if (!response.ok) {
-          throw new Error("No se pudieron cargar las cartas");
+          throw new Error("Respuesta no válida");
         }
         const data = await response.json();
 
@@ -76,10 +90,17 @@ function App() {
           });
           setError(null);
         }
-      } catch (err) {
-        if (!ignore) setError(err.message);
+      } catch {
+        if (!ignore) {
+          setError(
+            "No se pudieron cargar las cartas. Comprueba tu conexión e inténtalo de nuevo.",
+          );
+        }
       } finally {
-        if (!ignore) setLoading(false);
+        if (!ignore) {
+          setLoading(false);
+          setWaking(false);
+        }
       }
     }
 
@@ -87,6 +108,7 @@ function App() {
 
     return () => {
       ignore = true;
+      controller.abort();
     };
   }, [filters, refreshKey]);
 
@@ -111,6 +133,13 @@ function App() {
   }, [highlightId, cards]);
 
   function reloadCards() {
+    setRefreshKey((current) => current + 1);
+  }
+
+  // Botón "Reintentar" cuando la carga falla del todo
+  function retryLoad() {
+    setError(null);
+    setLoading(true);
     setRefreshKey((current) => current + 1);
   }
 
@@ -156,6 +185,12 @@ function App() {
     if (nextView === "catalog") reloadCards();
   }
 
+  // Al pulsar el título: catálogo y arriba del todo
+  function handleHome() {
+    goTo("catalog");
+    window.scrollTo({ top: 0, behavior: scrollBehavior() });
+  }
+
   function handleOrderPlaced() {
     reloadCards();
     setNotice("¡Pedido realizado con éxito! Aquí puedes ver su estado.");
@@ -174,142 +209,104 @@ function App() {
   if (view === "admin-orders" && !isAdmin) currentView = "catalog";
 
   return (
-    <div className="container">
-      <header className="app-header">
-        <div className="brand">
-          <h1>Magic Card Store</h1>
-          <div className="mana-pips" aria-hidden="true">
-            <span className="pip pip-W" />
-            <span className="pip pip-U" />
-            <span className="pip pip-B" />
-            <span className="pip pip-R" />
-            <span className="pip pip-G" />
-          </div>
-        </div>
+    <>
+      <a className="skip-link" href="#main">
+        Saltar al contenido
+      </a>
 
-        <div className="auth-area">
-          {user ? (
-            <>
-              <span>
-                {user.email}
-                {isAdmin && <span className="badge">admin</span>}
-              </span>
-              <button type="button" onClick={handleLogout}>
-                Cerrar sesión
-              </button>
-            </>
-          ) : (
-            <button type="button" onClick={() => setShowAuth(true)}>
-              Iniciar sesión
-            </button>
-          )}
-        </div>
-      </header>
+      <SiteHeader
+        currentView={currentView}
+        onNavigate={goTo}
+        onHome={handleHome}
+        onOpenLogin={() => setShowAuth(true)}
+        onLogout={handleLogout}
+      />
 
-      <nav className="main-nav">
-        <button
-          type="button"
-          className={currentView === "catalog" ? "active" : ""}
-          onClick={() => goTo("catalog")}
-        >
-          Catálogo
-        </button>
-        <button
-          type="button"
-          className={currentView === "cart" ? "active" : ""}
-          onClick={() => goTo("cart")}
-        >
-          Carrito ({count})
-        </button>
-        {user && (
-          <button
-            type="button"
-            className={currentView === "orders" ? "active" : ""}
-            onClick={() => goTo("orders")}
-          >
-            Mis pedidos
-          </button>
+      <main id="main" className="container">
+        {showAuth && !user && <AuthPanel onClose={() => setShowAuth(false)} />}
+
+        {currentView === "catalog" && (
+          <>
+            <FeaturedCard onSelect={showCardInCatalog} />
+
+            {isAdmin && <AddCardForm onCardAdded={reloadCards} />}
+
+            <div ref={catalogRef} className="catalog-section">
+              <FilterBar
+                filters={filters}
+                hasFilters={hasFilters}
+                onChange={updateFilters}
+                onReset={resetFilters}
+              />
+
+              {!loading && !error && (
+                <p className="results-count">
+                  {pageInfo.total} {pageInfo.total === 1 ? "carta" : "cartas"}
+                </p>
+              )}
+
+              <CardList
+                cards={cards}
+                loading={loading}
+                error={error}
+                waking={waking}
+                hasFilters={hasFilters}
+                highlightId={highlightId}
+                onChanged={reloadCards}
+                onRetry={retryLoad}
+              />
+
+              <Pagination
+                page={pageInfo.page}
+                totalPages={pageInfo.totalPages}
+                onPageChange={changePage}
+              />
+            </div>
+          </>
         )}
-        {isAdmin && (
-          <button
-            type="button"
-            className={currentView === "admin-orders" ? "active" : ""}
-            onClick={() => goTo("admin-orders")}
-          >
-            Pedidos de la tienda
-          </button>
+
+        {currentView === "cart" && (
+          <CartView
+            onOrderPlaced={handleOrderPlaced}
+            onReloadCards={reloadCards}
+            onNeedLogin={() => setShowAuth(true)}
+            onBrowse={() => goTo("catalog")}
+          />
         )}
-      </nav>
 
-      {showAuth && !user && <AuthPanel onClose={() => setShowAuth(false)} />}
+        {currentView === "orders" && (
+          <>
+            {notice && <p className="success">{notice}</p>}
+            <OrdersView key="mine" />
+          </>
+        )}
 
-      {currentView === "catalog" && (
-        <>
-          <FeaturedCard onSelect={showCardInCatalog} />
-
-          {isAdmin && <AddCardForm onCardAdded={reloadCards} />}
-
-          <div ref={catalogRef} className="catalog-section">
-            <FilterBar
-              filters={filters}
-              hasFilters={hasFilters}
-              onChange={updateFilters}
-              onReset={resetFilters}
-            />
-
-            {!loading && !error && (
-              <p className="results-count">
-                {pageInfo.total} {pageInfo.total === 1 ? "carta" : "cartas"}
-              </p>
-            )}
-
-            <CardList
-              cards={cards}
-              loading={loading}
-              error={error}
-              hasFilters={hasFilters}
-              highlightId={highlightId}
-              onChanged={reloadCards}
-            />
-
-            <Pagination
-              page={pageInfo.page}
-              totalPages={pageInfo.totalPages}
-              onPageChange={changePage}
-            />
-          </div>
-        </>
-      )}
-
-      {currentView === "cart" && (
-        <CartView
-          onOrderPlaced={handleOrderPlaced}
-          onReloadCards={reloadCards}
-          onNeedLogin={() => setShowAuth(true)}
-        />
-      )}
-
-      {currentView === "orders" && (
-        <>
-          {notice && <p className="success">{notice}</p>}
-          <OrdersView key="mine" />
-        </>
-      )}
-
-      {currentView === "admin-orders" && <OrdersView key="admin" admin />}
+        {currentView === "admin-orders" && <OrdersView key="admin" admin />}
+      </main>
 
       <footer className="app-footer">
-        <p>
-          Datos e imágenes de las cartas:{" "}
-          <a href="https://scryfall.com" target="_blank" rel="noreferrer">
-            Scryfall
-          </a>
-          . <em>Magic: The Gathering</em> es una marca de Wizards of the Coast.
-          Este es un proyecto de aficionados, no oficial y sin afiliación con
-          Wizards of the Coast ni con Scryfall.
-        </p>
+        <div className="footer-inner">
+          <p>
+            Datos e imágenes de las cartas:{" "}
+            <a href="https://scryfall.com" target="_blank" rel="noreferrer">
+              Scryfall
+            </a>
+            . <em>Magic: The Gathering</em> es una marca de Wizards of the
+            Coast. Este es un proyecto de aficionados, no oficial y sin
+            afiliación con Wizards of the Coast ni con Scryfall.
+          </p>
+        </div>
       </footer>
-    </div>
+
+      {/* Aviso de "añadida al carrito": una key nueva por cada carta añadida lo vuelve a mostrar */}
+      {lastAdded && (
+        <CartToast
+          key={lastAdded.key}
+          name={lastAdded.name}
+          onViewCart={() => goTo("cart")}
+        />
+      )}
+    </>
   );
 }
 

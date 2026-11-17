@@ -22,6 +22,8 @@ function saveCart(items) {
 
 export function CartProvider({ children }) {
   const [items, setItems] = useState(readCart);
+  // Última carta añadida: la usa el aviso "Añadida al carrito"
+  const [lastAdded, setLastAdded] = useState(null);
 
   // Cambia el carrito en pantalla y lo guarda en el navegador
   function update(nextItems) {
@@ -46,6 +48,7 @@ export function CartProvider({ children }) {
             : item,
         ),
       );
+      setLastAdded({ name: card.name, key: Date.now() });
     } else if (card.stock >= 1) {
       update([
         ...items,
@@ -59,6 +62,7 @@ export function CartProvider({ children }) {
           quantity: 1,
         },
       ]);
+      setLastAdded({ name: card.name, key: Date.now() });
     }
   }
 
@@ -95,6 +99,7 @@ export function CartProvider({ children }) {
     items,
     count,
     total,
+    lastAdded,
     addItem,
     setQuantity,
     removeItem,

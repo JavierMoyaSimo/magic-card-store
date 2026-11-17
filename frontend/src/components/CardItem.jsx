@@ -6,7 +6,8 @@ import { apiUrl } from "../api.js";
 function CardItem({ card, onChanged, highlighted = false }) {
   const { token, isAdmin } = useAuth();
   const { items, addItem } = useCart();
-  const inCart = items.find((item) => item.cardId === card._id)?.quantity ?? 0;
+  const inCart = items.find((item) => item.cardId === card._id)?.quantity ?? 0; // Lo que queda disponible para ti: el stock real menos lo que ya llevas en el carrito
+  const available = Math.max(0, card.stock - inCart);
 
   const [isEditing, setIsEditing] = useState(false);
   const [price, setPrice] = useState(String(card.price));
@@ -158,18 +159,21 @@ function CardItem({ card, onChanged, highlighted = false }) {
               </span>
             </div>
 
-            <p className="card-stock">Stock: {card.stock}</p>
+            <p className="card-stock">
+              {card.stock > 0 ? `Disponibles: ${available}` : "Sin stock"}
+              {inCart > 0 && (
+                <span className="in-cart"> · {inCart} en tu carrito</span>
+              )}
+            </p>
 
             {card.stock > 0 ? (
               <button
                 type="button"
                 className="add-to-cart"
                 onClick={() => addItem(card)}
-                disabled={inCart >= card.stock}
+                disabled={available === 0}
               >
-                {inCart >= card.stock
-                  ? "Máximo en el carrito"
-                  : "Añadir al carrito"}
+                {available === 0 ? "Máximo en el carrito" : "Añadir al carrito"}
               </button>
             ) : (
               <p className="out-of-stock">Agotada</p>
