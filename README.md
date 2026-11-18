@@ -46,6 +46,7 @@ El catálogo es público y se puede consultar sin iniciar sesión. Para probar e
 - Sección de carta destacada: una carta al azar con stock, mostrada con su imagen completa y sin modificar.
 - Ventana modal de acceso construida con el elemento nativo `<dialog>` (foco atrapado, cierre con Escape) y botón para localizar la carta destacada en el catálogo, con desplazamiento y resaltado.
 - Ventana de detalle de cada carta con texto de reglas, edición, rareza, color y coste de maná, con los símbolos de maná dibujados con CSS. Se construye con el elemento nativo `<dialog>` y se puede añadir al carrito desde ella.
+- Enlace compartible por carta (`?card=<id>`): abre directamente su ventana de detalle, con botón para copiar el enlace y aviso si la carta ya no existe.
 
 ## Autenticación y roles
 
