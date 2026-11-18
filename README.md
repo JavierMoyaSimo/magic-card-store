@@ -14,13 +14,34 @@ El catálogo es público y se puede consultar sin iniciar sesión. Para probar e
 
 ## Capturas de pantalla
 
-![Catálogo público de la tienda](docs/screenshot0.png)
+### Catálogo
 
-![Inicio de sesión y registro](docs/screenshot1.png)
+![Catálogo con carta destacada, filtros y cartas](docs/01-catalogo.png)
 
-![Panel de administración para añadir cartas](docs/screenshot2.png)
+### Filtros y paginación
 
-![Edición y gestión de cartas](docs/screenshot3.png)
+![Catálogo filtrado por tipo y color, con paginación](docs/02-filtros.png)
+
+### Detalle de una carta
+
+![Ventana de detalle con texto de reglas y símbolos de maná](docs/03-detalle.png)
+
+### Carrito
+
+![Carrito con varias cartas y el total](docs/04-carrito.png)
+
+### Administración
+
+![Formulario de añadir cartas con autocompletado](docs/05-admin-anadir.png)
+
+![Gestión de pedidos de la tienda](docs/06-admin-pedidos.png)
+
+### Móvil
+
+<p align="center">
+  <img src="docs/07-movil-catalogo.png" width="260" alt="Catálogo en móvil" />
+  <img src="docs/08-movil-detalle.png" width="260" alt="Detalle de una carta en móvil" />
+</p>
 
 ## Funcionalidades
 
