@@ -1563,3 +1563,11 @@ body:has(dialog[open]) {
     justify-content: center;
   }
 }
+
+.notice-line {
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--gold);
+  border-radius: 8px;
+}

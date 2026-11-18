@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import CardList from "./components/CardList.jsx";
 import AddCardForm from "./components/AddCardForm.jsx";
 import AuthPanel from "./components/AuthPanel.jsx";
@@ -9,7 +9,7 @@ import Pagination from "./components/Pagination.jsx";
 import FeaturedCard from "./components/FeaturedCard.jsx";
 import SiteHeader from "./components/SiteHeader.jsx";
 import CartToast from "./components/CartToast.jsx";
-import CardDetail from "./components/CardDetail.jsx";
+import CardDetailLoader from "./components/CardDetailLoader.jsx";
 import { useAuth } from "./auth/useAuth.js";
 import { useCart } from "./cart/useCart.js";
 import { fetchWithRetry } from "./api.js";
@@ -18,6 +18,7 @@ import {
   PAGE_SIZE,
   buildParams,
   readFiltersFromUrl,
+  readCardIdFromUrl,
 } from "./filters.js";
 
 // Quien prefiere menos animaciones recibe un desplazamiento instantáneo
@@ -53,8 +54,10 @@ function App() {
 
   // Carta que hay que mostrar y resaltar tras pulsar "Ver en el catálogo"
   const [highlightId, setHighlightId] = useState(null);
-  // Carta abierta en la ventana de detalle
-  const [selectedCard, setSelectedCard] = useState(null);
+  // Identificador de la carta abierta en la ventana de detalle (puede venir de un enlace)
+  const [selectedId, setSelectedId] = useState(readCardIdFromUrl);
+  // Aviso sobre el catálogo (por ejemplo, si un enlace apunta a una carta que ya no existe)
+  const [catalogNotice, setCatalogNotice] = useState(null);
   // Referencia a la zona del catálogo (filtros + resultados), para poder bajar hasta ella
   const catalogRef = useRef(null);
 
@@ -115,12 +118,14 @@ function App() {
     };
   }, [filters, refreshKey]);
 
-  // Mantiene la dirección del navegador al día con los filtros (se puede copiar y compartir)
+  // Mantiene la dirección del navegador al día con los filtros y la carta abierta
   useEffect(() => {
-    const query = buildParams(filters).toString();
+    const params = buildParams(filters);
+    if (selectedId) params.set("card", selectedId);
+    const query = params.toString();
     const url = `${window.location.pathname}${query ? `?${query}` : ""}`;
     window.history.replaceState(null, "", url);
-  }, [filters]);
+  }, [filters, selectedId]);
 
   // Cuando la carta pedida ya está en pantalla, bajamos hasta ella y la resaltamos unos segundos
   useEffect(() => {
@@ -184,6 +189,7 @@ function App() {
   function goTo(nextView) {
     setView(nextView);
     setNotice(null);
+    setCatalogNotice(null);
     // Al volver al catálogo lo actualizamos: el stock pudo cambiar
     if (nextView === "catalog") reloadCards();
   }
@@ -205,10 +211,23 @@ function App() {
     goTo("catalog");
   }
 
-  // Si la carta abierta también está en la lista, usamos esa copia, que es la más reciente
-  const detailCard = selectedCard
-    ? (cards.find((card) => card._id === selectedCard._id) ?? selectedCard)
+  // Si la carta abierta está en la página actual del catálogo, usamos esa copia (la más reciente).
+  // Si no (por ejemplo, llegaste desde un enlace), el cargador la pedirá al servidor.
+  const knownCard = selectedId
+    ? (cards.find((card) => card._id === selectedId) ?? null)
     : null;
+
+  function openCard(card) {
+    setSelectedId(card._id);
+  }
+
+  // useCallback mantiene la misma función entre pintados: el cargador la usa como dependencia
+  const handleCardNotFound = useCallback(() => {
+    setSelectedId(null);
+    setCatalogNotice(
+      "No hemos podido abrir esa carta. Puede que ya no esté disponible.",
+    );
+  }, []);
 
   // Si la sesión se cierra o caduca, volvemos al catálogo
   let currentView = view;
@@ -235,10 +254,19 @@ function App() {
 
         {currentView === "catalog" && (
           <>
-            <FeaturedCard
-              onSelect={showCardInCatalog}
-              onOpen={setSelectedCard}
-            />
+            {catalogNotice && (
+              <p className="notice-line" role="status">
+                {catalogNotice}{" "}
+                <button
+                  type="button"
+                  className="link-button"
+                  onClick={() => setCatalogNotice(null)}
+                >
+                  Cerrar
+                </button>
+              </p>
+            )}
+            <FeaturedCard onSelect={showCardInCatalog} onOpen={openCard} />
 
             {isAdmin && <AddCardForm onCardAdded={reloadCards} />}
 
@@ -265,7 +293,7 @@ function App() {
                 highlightId={highlightId}
                 onChanged={reloadCards}
                 onRetry={retryLoad}
-                onOpen={setSelectedCard}
+                onOpen={openCard}
               />
 
               <Pagination
@@ -294,15 +322,17 @@ function App() {
         )}
 
         {currentView === "admin-orders" && <OrdersView key="admin" admin />}
-        {detailCard && (
-          <CardDetail
-            key={detailCard._id}
-            card={detailCard}
-            onClose={() => setSelectedCard(null)}
+        {selectedId && (
+          <CardDetailLoader
+            key={selectedId}
+            id={selectedId}
+            knownCard={knownCard}
+            onClose={() => setSelectedId(null)}
             onViewCart={() => {
-              setSelectedCard(null);
+              setSelectedId(null);
               goTo("cart");
             }}
+            onNotFound={handleCardNotFound}
           />
         )}
       </main>

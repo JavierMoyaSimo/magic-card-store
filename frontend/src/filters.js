@@ -87,3 +87,9 @@ export function readFiltersFromUrl() {
     page: Number.isFinite(page) && page > 0 ? page : 1,
   };
 }
+
+// Lee el identificador de la carta de la dirección (?card=...), solo si tiene el formato de MongoDB
+export function readCardIdFromUrl() {
+  const id = new URLSearchParams(window.location.search).get("card");
+  return id && /^[a-f0-9]{24}$/i.test(id) ? id : null;
+}

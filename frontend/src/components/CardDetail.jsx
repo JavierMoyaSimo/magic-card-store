@@ -36,6 +36,7 @@ function CardDetail({ card, onClose, onViewCart }) {
   const dialogRef = useRef(null);
   const { items, addItem } = useCart();
   const [added, setAdded] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   // Lo que queda disponible para ti: el stock real menos lo que ya llevas en el carrito
   const inCart = items.find((item) => item.cardId === card._id)?.quantity ?? 0;
@@ -54,6 +55,13 @@ function CardDetail({ card, onClose, onViewCart }) {
     return () => clearTimeout(timer);
   }, [added]);
 
+  // El mensaje "Enlace copiado" desaparece solo
+  useEffect(() => {
+    if (!copied) return;
+    const timer = setTimeout(() => setCopied(false), 1800);
+    return () => clearTimeout(timer);
+  }, [copied]);
+
   function closeDialog() {
     dialogRef.current?.close();
   }
@@ -68,6 +76,18 @@ function CardDetail({ card, onClose, onViewCart }) {
     setAdded(true);
   }
 
+  // Enlace directo a esta carta: solo lleva su identificador, sin filtros
+  const shareUrl = `${window.location.origin}${window.location.pathname}?card=${card._id}`;
+
+  async function handleCopyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+    } catch {
+      // Si el navegador no permite copiar, mostramos el enlace para copiarlo a mano
+      window.prompt("Copia el enlace de la carta:", shareUrl);
+    }
+  }
   return (
     <dialog
       ref={dialogRef}
@@ -177,6 +197,13 @@ function CardDetail({ card, onClose, onViewCart }) {
                   Ver carrito
                 </button>
               )}
+              <button
+                type="button"
+                className="secondary"
+                onClick={handleCopyLink}
+              >
+                {copied ? "Enlace copiado ✓" : "Copiar enlace"}
+              </button>
             </div>
           </div>
         </div>
