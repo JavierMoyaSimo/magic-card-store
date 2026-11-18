@@ -9,6 +9,7 @@ import Pagination from "./components/Pagination.jsx";
 import FeaturedCard from "./components/FeaturedCard.jsx";
 import SiteHeader from "./components/SiteHeader.jsx";
 import CartToast from "./components/CartToast.jsx";
+import CardDetail from "./components/CardDetail.jsx";
 import { useAuth } from "./auth/useAuth.js";
 import { useCart } from "./cart/useCart.js";
 import { fetchWithRetry } from "./api.js";
@@ -52,6 +53,8 @@ function App() {
 
   // Carta que hay que mostrar y resaltar tras pulsar "Ver en el catálogo"
   const [highlightId, setHighlightId] = useState(null);
+  // Carta abierta en la ventana de detalle
+  const [selectedCard, setSelectedCard] = useState(null);
   // Referencia a la zona del catálogo (filtros + resultados), para poder bajar hasta ella
   const catalogRef = useRef(null);
 
@@ -202,6 +205,11 @@ function App() {
     goTo("catalog");
   }
 
+  // Si la carta abierta también está en la lista, usamos esa copia, que es la más reciente
+  const detailCard = selectedCard
+    ? (cards.find((card) => card._id === selectedCard._id) ?? selectedCard)
+    : null;
+
   // Si la sesión se cierra o caduca, volvemos al catálogo
   let currentView = view;
   if ((view === "orders" || view === "admin-orders") && !user)
@@ -227,7 +235,10 @@ function App() {
 
         {currentView === "catalog" && (
           <>
-            <FeaturedCard onSelect={showCardInCatalog} />
+            <FeaturedCard
+              onSelect={showCardInCatalog}
+              onOpen={setSelectedCard}
+            />
 
             {isAdmin && <AddCardForm onCardAdded={reloadCards} />}
 
@@ -254,6 +265,7 @@ function App() {
                 highlightId={highlightId}
                 onChanged={reloadCards}
                 onRetry={retryLoad}
+                onOpen={setSelectedCard}
               />
 
               <Pagination
@@ -282,6 +294,17 @@ function App() {
         )}
 
         {currentView === "admin-orders" && <OrdersView key="admin" admin />}
+        {detailCard && (
+          <CardDetail
+            key={detailCard._id}
+            card={detailCard}
+            onClose={() => setSelectedCard(null)}
+            onViewCart={() => {
+              setSelectedCard(null);
+              goTo("cart");
+            }}
+          />
+        )}
       </main>
 
       <footer className="app-footer">

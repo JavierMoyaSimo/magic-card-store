@@ -52,7 +52,7 @@ function clearCard() {
   }
 }
 
-function FeaturedCard({ onSelect }) {
+function FeaturedCard({ onSelect, onOpen }) {
   // La carta guardada en la visita anterior se pinta al instante, sin esperar al servidor
   const [card, setCard] = useState(readCachedCard);
   // "loading": sin carta que enseñar y esperando al servidor; "ready": hay carta; "empty": no hay
@@ -155,9 +155,18 @@ function FeaturedCard({ onSelect }) {
           {card.setName} · {card.typeLine}
         </p>
         <p className="price">{card.price.toFixed(2)} €</p>
-        <button type="button" onClick={() => onSelect(card)}>
-          Ver en el catálogo
-        </button>
+        <div className="hero-actions">
+          <button type="button" onClick={() => onSelect(card)}>
+            Ver en el catálogo
+          </button>
+          <button
+            type="button"
+            className="secondary"
+            onClick={() => onOpen(card)}
+          >
+            Ver detalle
+          </button>
+        </div>
       </div>
     </section>
   );

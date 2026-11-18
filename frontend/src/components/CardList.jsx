@@ -9,6 +9,7 @@ function CardList({
   highlightId,
   onChanged,
   onRetry,
+  onOpen,
 }) {
   if (loading) {
     return waking ? (
@@ -58,6 +59,7 @@ function CardList({
           key={card._id}
           card={card}
           onChanged={onChanged}
+          onOpen={onOpen}
           highlighted={card._id === highlightId}
         />
       ))}
