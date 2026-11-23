@@ -1,9 +1,10 @@
 import { useState } from "react";
+import { Link } from "react-router";
 import { useAuth } from "../auth/useAuth.js";
 import { useCart } from "../cart/useCart.js";
 import { apiUrl } from "../api.js";
 
-function CardItem({ card, onChanged, onOpen, highlighted = false }) {
+function CardItem({ card, onChanged, highlighted = false }) {
   const { token, isAdmin } = useAuth();
   const { items, addItem } = useCart();
   const inCart = items.find((item) => item.cardId === card._id)?.quantity ?? 0; // Lo que queda disponible para ti: el stock real menos lo que ya llevas en el carrito
@@ -86,28 +87,26 @@ function CardItem({ card, onChanged, onOpen, highlighted = false }) {
       id={`card-${card._id}`}
       className={`card${highlighted ? " highlight" : ""}`}
     >
-      {/* Parte de arriba: imagen y nombre. Ambos abren el detalle */}
+      {/* Parte de arriba: imagen y nombre. Ambos llevan a la ficha de la carta */}
       <div className="card-top">
         {card.imageUrl && (
-          <button
-            type="button"
+          <Link
+            to={`/cartas/${card._id}`}
             className="card-open"
             tabIndex={-1}
             aria-hidden="true"
-            onClick={() => onOpen(card)}
           >
             <img src={card.imageUrl} alt={card.name} loading="lazy" />
-          </button>
+          </Link>
         )}
         <h3>
-          <button
-            type="button"
+          <Link
+            to={`/cartas/${card._id}`}
             className="card-title-button"
             title={card.name}
-            onClick={() => onOpen(card)}
           >
             <span className="card-title-text">{card.name}</span>
-          </button>
+          </Link>
         </h3>
         <p className="card-set" title={card.setName}>
           {card.setName}

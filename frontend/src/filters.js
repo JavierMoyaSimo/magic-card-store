@@ -64,9 +64,8 @@ export function buildParams(filters) {
   return params;
 }
 
-// Lee los filtros de la dirección actual, descartando valores que no existan
-export function readFiltersFromUrl() {
-  const params = new URLSearchParams(window.location.search);
+// Lee los filtros de unos parámetros de dirección, descartando valores que no existan
+export function parseFilters(params) {
   const page = Number.parseInt(params.get("page"), 10);
   const validColors = COLOR_OPTIONS.map((option) => option.code);
 
@@ -86,10 +85,4 @@ export function readFiltersFromUrl() {
     sort: SORT_OPTIONS.some((option) => option.value === sort) ? sort : "name",
     page: Number.isFinite(page) && page > 0 ? page : 1,
   };
-}
-
-// Lee el identificador de la carta de la dirección (?card=...), solo si tiene el formato de MongoDB
-export function readCardIdFromUrl() {
-  const id = new URLSearchParams(window.location.search).get("card");
-  return id && /^[a-f0-9]{24}$/i.test(id) ? id : null;
 }

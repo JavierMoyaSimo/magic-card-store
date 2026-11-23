@@ -3,7 +3,7 @@ import { useAuth } from "../auth/useAuth.js";
 import { useCart } from "../cart/useCart.js";
 import { apiUrl } from "../api.js";
 
-function CartView({ onOrderPlaced, onReloadCards, onNeedLogin, onBrowse }) {
+function CartView({ onOrderPlaced, onNeedLogin, onBrowse }) {
   const { user, token } = useAuth();
   const { items, total, setQuantity, removeItem, clearCart } = useCart();
   const [busy, setBusy] = useState(false);
@@ -43,7 +43,6 @@ function CartView({ onOrderPlaced, onReloadCards, onNeedLogin, onBrowse }) {
       onOrderPlaced();
     } catch (err) {
       setError(err.message);
-      onReloadCards(); // el stock pudo cambiar: actualizamos el catálogo
     } finally {
       setBusy(false);
     }

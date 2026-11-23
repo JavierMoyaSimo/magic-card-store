@@ -1,6 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate, useParams } from "react-router";
+import { fetchWithRetry } from "../api.js";
 import { useCart } from "../cart/useCart.js";
-import ManaText from "./ManaText.jsx";
+import { usePageTitle } from "../hooks/usePageTitle.js";
+import ManaText from "../components/ManaText.jsx";
+import NotFoundPage from "./NotFoundPage.jsx";
 
 const RARITY_LABELS = {
   common: "Común",
@@ -32,21 +36,63 @@ function colorLabel(colors) {
   return colors.map((code) => COLOR_NAMES[code] ?? code).join(", ");
 }
 
-function CardDetail({ card, onClose, onViewCart }) {
-  const dialogRef = useRef(null);
+function CardPage() {
+  // useParams lee la parte variable de la dirección: /cartas/:id
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const location = useLocation();
   const { items, addItem } = useCart();
+
+  // Resultado de pedir la carta, junto con el id al que corresponde
+  const [result, setResult] = useState({
+    id: null,
+    status: "loading",
+    card: null,
+  });
   const [added, setAdded] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  // Lo que queda disponible para ti: el stock real menos lo que ya llevas en el carrito
-  const inCart = items.find((item) => item.cardId === card._id)?.quantity ?? 0;
-  const available = Math.max(0, card.stock - inCart);
+  // Un identificador de MongoDB son exactamente 24 caracteres hexadecimales
+  const validId = /^[a-f0-9]{24}$/i.test(id ?? "");
+  const current =
+    result.id === id ? result : { id, status: "loading", card: null };
+  const card = current.card;
 
-  // Al aparecer, se abre como ventana modal
+  usePageTitle(card?.name);
+
   useEffect(() => {
-    const dialog = dialogRef.current;
-    if (dialog && !dialog.open) dialog.showModal();
-  }, []);
+    if (!validId) return;
+
+    let ignore = false;
+    const controller = new AbortController();
+
+    async function loadCard() {
+      try {
+        const response = await fetchWithRetry(`/api/cards/${id}`, {
+          signal: controller.signal,
+        });
+        if (ignore) return;
+
+        if (response.status === 404) {
+          setResult({ id, status: "notFound", card: null });
+          return;
+        }
+        if (!response.ok) throw new Error("Respuesta no válida");
+
+        const data = await response.json();
+        if (!ignore) setResult({ id, status: "ready", card: data });
+      } catch {
+        if (!ignore) setResult({ id, status: "error", card: null });
+      }
+    }
+
+    loadCard();
+
+    return () => {
+      ignore = true;
+      controller.abort();
+    };
+  }, [id, validId]);
 
   // El mensaje "Añadida" desaparece solo
   useEffect(() => {
@@ -62,13 +108,11 @@ function CardDetail({ card, onClose, onViewCart }) {
     return () => clearTimeout(timer);
   }, [copied]);
 
-  function closeDialog() {
-    dialogRef.current?.close();
-  }
-
-  // Un clic sobre el fondo oscuro (fuera del cuadro) cierra la ventana
-  function handleBackdropClick(event) {
-    if (event.target === event.currentTarget) closeDialog();
+  // "default" es la clave de la primera entrada del historial: si llegaste desde un enlace,
+  // no hay página anterior de esta web a la que volver, y vamos al catálogo
+  function goBack() {
+    if (location.key !== "default") navigate(-1);
+    else navigate("/");
   }
 
   function handleAdd() {
@@ -76,36 +120,48 @@ function CardDetail({ card, onClose, onViewCart }) {
     setAdded(true);
   }
 
-  // Enlace directo a esta carta: solo lleva su identificador, sin filtros
-  const shareUrl = `${window.location.origin}${window.location.pathname}?card=${card._id}`;
-
   async function handleCopyLink() {
+    const url = `${window.location.origin}${location.pathname}`;
     try {
-      await navigator.clipboard.writeText(shareUrl);
+      await navigator.clipboard.writeText(url);
       setCopied(true);
     } catch {
       // Si el navegador no permite copiar, mostramos el enlace para copiarlo a mano
-      window.prompt("Copia el enlace de la carta:", shareUrl);
+      window.prompt("Copia el enlace de la carta:", url);
     }
   }
-  return (
-    <dialog
-      ref={dialogRef}
-      className="detail-dialog"
-      aria-labelledby="detail-title"
-      onClose={onClose}
-      onClick={handleBackdropClick}
-    >
-      <div className="detail-body">
-        <button
-          type="button"
-          className="detail-close"
-          aria-label="Cerrar"
-          onClick={closeDialog}
-        >
-          ×
-        </button>
 
+  if (!validId || current.status === "notFound") {
+    return (
+      <NotFoundPage message="No encontramos esa carta. Puede que ya no esté disponible." />
+    );
+  }
+
+  if (current.status === "error") {
+    return (
+      <section className="panel">
+        <h2>No se pudo cargar la carta</h2>
+        <p className="hint">Comprueba tu conexión e inténtalo de nuevo.</p>
+        <button type="button" onClick={() => navigate(0)}>
+          Reintentar
+        </button>
+      </section>
+    );
+  }
+
+  if (!card) return <p>Cargando carta…</p>;
+
+  // Lo que queda disponible para ti: el stock real menos lo que ya llevas en el carrito
+  const inCart = items.find((item) => item.cardId === card._id)?.quantity ?? 0;
+  const available = Math.max(0, card.stock - inCart);
+
+  return (
+    <section className="panel detail-page">
+      <button type="button" className="link-button back-link" onClick={goBack}>
+        ← Volver
+      </button>
+
+      <div className="detail-body">
         <div className="detail-image">
           {card.imageUrl ? (
             <img src={card.imageUrl} alt={card.name} />
@@ -115,7 +171,7 @@ function CardDetail({ card, onClose, onViewCart }) {
         </div>
 
         <div className="detail-info">
-          <h2 id="detail-title">{card.name}</h2>
+          <h2>{card.name}</h2>
 
           {card.manaCost && (
             <p className="detail-mana">
@@ -189,14 +245,11 @@ function CardDetail({ card, onClose, onViewCart }) {
               )}
 
               {inCart > 0 && (
-                <button
-                  type="button"
-                  className="secondary"
-                  onClick={onViewCart}
-                >
+                <Link to="/carrito" className="button-link">
                   Ver carrito
-                </button>
+                </Link>
               )}
+
               <button
                 type="button"
                 className="secondary"
@@ -208,8 +261,8 @@ function CardDetail({ card, onClose, onViewCart }) {
           </div>
         </div>
       </div>
-    </dialog>
+    </section>
   );
 }
 
-export default CardDetail;
+export default CardPage;

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { Link } from "react-router";
 import { fetchWithRetry } from "../api.js";
 
 const STORAGE_KEY = "magic-store-featured";
@@ -52,7 +53,7 @@ function clearCard() {
   }
 }
 
-function FeaturedCard({ onSelect, onOpen }) {
+function FeaturedCard({ onSelect }) {
   // La carta guardada en la visita anterior se pinta al instante, sin esperar al servidor
   const [card, setCard] = useState(readCachedCard);
   // "loading": sin carta que enseñar y esperando al servidor; "ready": hay carta; "empty": no hay
@@ -159,13 +160,9 @@ function FeaturedCard({ onSelect, onOpen }) {
           <button type="button" onClick={() => onSelect(card)}>
             Ver en el catálogo
           </button>
-          <button
-            type="button"
-            className="secondary"
-            onClick={() => onOpen(card)}
-          >
+          <Link to={`/cartas/${card._id}`} className="button-link">
             Ver detalle
-          </button>
+          </Link>
         </div>
       </div>
     </section>

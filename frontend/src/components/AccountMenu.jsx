@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from "react";
+import { Link, useLocation } from "react-router";
 import { useAuth } from "../auth/useAuth.js";
 import { ChevronIcon, UserIcon } from "./Icons.jsx";
 
-function AccountMenu({ currentView, onNavigate, onOpenLogin, onLogout }) {
+function AccountMenu({ onOpenLogin, onLogout }) {
   const { user, isAdmin } = useAuth();
+  const { pathname } = useLocation();
   const [open, setOpen] = useState(false);
   const rootRef = useRef(null);
   const buttonRef = useRef(null);
@@ -47,21 +49,15 @@ function AccountMenu({ currentView, onNavigate, onOpenLogin, onLogout }) {
     );
   }
 
-  // Cierra el menú antes de ejecutar la acción elegida
-  function choose(action) {
-    setOpen(false);
-    action();
-  }
-
-  const isAccountView =
-    currentView === "orders" || currentView === "admin-orders";
+  const isAccountArea =
+    pathname.startsWith("/pedidos") || pathname.startsWith("/admin");
 
   return (
     <div className="account-menu" ref={rootRef}>
       <button
         ref={buttonRef}
         type="button"
-        className={`header-icon-button${isAccountView ? " active" : ""}`}
+        className={`header-icon-button${isAccountArea ? " active" : ""}`}
         aria-expanded={open}
         aria-controls="account-menu-panel"
         aria-label="Mi cuenta"
@@ -79,26 +75,23 @@ function AccountMenu({ currentView, onNavigate, onOpenLogin, onLogout }) {
             {isAdmin && <span className="badge">admin</span>}
           </div>
 
-          <button
-            type="button"
-            onClick={() => choose(() => onNavigate("orders"))}
-          >
+          <Link to="/pedidos" onClick={() => setOpen(false)}>
             Mis pedidos
-          </button>
+          </Link>
 
           {isAdmin && (
-            <button
-              type="button"
-              onClick={() => choose(() => onNavigate("admin-orders"))}
-            >
+            <Link to="/admin/pedidos" onClick={() => setOpen(false)}>
               Pedidos de la tienda
-            </button>
+            </Link>
           )}
 
           <button
             type="button"
             className="menu-danger"
-            onClick={() => choose(onLogout)}
+            onClick={() => {
+              setOpen(false);
+              onLogout();
+            }}
           >
             Cerrar sesión
           </button>

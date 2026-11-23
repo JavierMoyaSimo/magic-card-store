@@ -1,14 +1,9 @@
+import { Link, NavLink } from "react-router";
 import AccountMenu from "./AccountMenu.jsx";
 import { CartIcon } from "./Icons.jsx";
 import { useCart } from "../cart/useCart.js";
 
-function SiteHeader({
-  currentView,
-  onNavigate,
-  onHome,
-  onOpenLogin,
-  onLogout,
-}) {
+function SiteHeader({ onOpenLogin, onLogout }) {
   const { count } = useCart();
 
   return (
@@ -16,15 +11,7 @@ function SiteHeader({
       <div className="header-inner">
         <div className="brand">
           <h1>
-            <a
-              href="/"
-              onClick={(event) => {
-                event.preventDefault();
-                onHome();
-              }}
-            >
-              Magic Card Store
-            </a>
+            <Link to="/">Magic Card Store</Link>
           </h1>
           <div className="mana-pips" aria-hidden="true">
             <span className="pip pip-W" />
@@ -36,19 +23,15 @@ function SiteHeader({
         </div>
 
         <div className="header-actions">
-          <AccountMenu
-            currentView={currentView}
-            onNavigate={onNavigate}
-            onOpenLogin={onOpenLogin}
-            onLogout={onLogout}
-          />
+          <AccountMenu onOpenLogin={onOpenLogin} onLogout={onLogout} />
 
-          <button
-            type="button"
-            className={`header-icon-button${currentView === "cart" ? " active" : ""}`}
+          {/* NavLink añade solo aria-current="page" y nos dice si es la página actual */}
+          <NavLink
+            to="/carrito"
+            className={({ isActive }) =>
+              `header-icon-button${isActive ? " active" : ""}`
+            }
             aria-label={`Carrito: ${count} ${count === 1 ? "artículo" : "artículos"}`}
-            aria-current={currentView === "cart" ? "page" : undefined}
-            onClick={() => onNavigate("cart")}
           >
             <CartIcon />
             {/* key={count}: al cambiar el número, React recrea el globo y se repite la animación */}
@@ -57,7 +40,7 @@ function SiteHeader({
                 {count > 99 ? "99+" : count}
               </span>
             )}
-          </button>
+          </NavLink>
         </div>
       </div>
     </header>

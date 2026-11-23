@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import {
   COLOR_OPTIONS,
   MANA_OPTIONS,
@@ -6,6 +7,33 @@ import {
 } from "../filters.js";
 
 function FilterBar({ filters, hasFilters, onChange, onReset }) {
+  // El texto del buscador se guarda aparte: así escribir es fluido y llega a la dirección con una espera
+  const [searchText, setSearchText] = useState(filters.search);
+  const [syncedSearch, setSyncedSearch] = useState(filters.search);
+  // Guardamos la versión más reciente de onChange sin que reinicie el temporizador en cada pintado
+  const onChangeRef = useRef(onChange);
+
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  });
+
+  // Si la dirección cambia por otro motivo (limpiar filtros, "Ver en el catálogo"), el campo se actualiza
+  if (filters.search !== syncedSearch) {
+    setSyncedSearch(filters.search);
+    setSearchText(filters.search);
+  }
+
+  // Vuelca el texto a la dirección 300 ms después de que dejes de escribir
+  useEffect(() => {
+    if (searchText === filters.search) return;
+
+    const timer = setTimeout(
+      () => onChangeRef.current({ search: searchText }),
+      300,
+    );
+    return () => clearTimeout(timer);
+  }, [searchText, filters.search]);
+
   // Añade el color si no estaba seleccionado, o lo quita si ya lo estaba
   function toggleColor(code) {
     const colors = filters.colors.includes(code)
@@ -20,8 +48,8 @@ function FilterBar({ filters, hasFilters, onChange, onReset }) {
         type="search"
         className="search-input"
         placeholder="Buscar en la tienda por nombre..."
-        value={filters.search}
-        onChange={(e) => onChange({ search: e.target.value })}
+        value={searchText}
+        onChange={(e) => setSearchText(e.target.value)}
       />
 
       <div className="filter-row">
