@@ -24,7 +24,7 @@ El catálogo es público y se puede consultar sin iniciar sesión. Para probar e
 
 ### Detalle de una carta
 
-![Ventana de detalle con texto de reglas y símbolos de maná](docs/03-detalle.png)
+![Detalle de una carta con texto de reglas y símbolos de maná](docs/03-detalle.png)
 
 ### Carrito
 
@@ -45,29 +45,45 @@ El catálogo es público y se puede consultar sin iniciar sesión. Para probar e
 
 ## Funcionalidades
 
-- Catálogo público: cualquier visitante puede consultar y buscar las cartas de la tienda.
+### Catálogo y compra
+
+- Catálogo público: cualquier visitante puede consultar y buscar las cartas de la tienda por nombre.
+- Filtros por tipo de carta, color de maná y coste de maná, con ordenación y paginación. Los filtros se guardan en la dirección web, por lo que se pueden compartir.
+- Ficha de cada carta (`/cartas/:id`) con texto de reglas, edición, rareza, color y coste de maná, con los símbolos de maná dibujados con CSS. Se puede copiar su enlace y añadirla al carrito desde ella.
+- Sección de carta destacada: una carta al azar con stock, mostrada con su imagen completa y sin modificar.
+- Carrito de compra guardado en el navegador, con el stock disponible calculado a partir de lo que ya llevas en él.
+- Pedidos sin pago real: el servidor calcula los precios, comprueba el stock y descuenta las unidades de forma atómica dentro de una transacción.
+- Historial de pedidos para cada usuario.
+
+### Administración
+
+- Añadir cartas a la tienda por nombre, con sugerencias de autocompletado mientras escribes.
+- **Añadir cartas mediante una fotografía**: la API de Claude (visión) identifica el nombre de la carta y Scryfall proporciona sus datos oficiales.
+- Obtener automáticamente los datos e imágenes de las cartas mediante la [API de Scryfall](https://scryfall.com/docs/api), con búsqueda tolerante a errores tipográficos (por ejemplo, "light bolt" encuentra _Lightning Bolt_).
+- Editar el precio, el stock y el estado de conservación (NM, LP, MP, HP, DMG), y eliminar cartas.
+- Protección contra duplicados: no se puede añadir dos veces la misma carta.
+- Panel de pedidos de la tienda: el administrador puede marcarlos como enviados o cancelarlos (al cancelar, el stock se devuelve a la tienda).
+
+### Cuentas y seguridad
+
 - Cuentas de usuario con registro e inicio de sesión (autenticación con JWT y contraseñas cifradas con bcrypt).
 - Control de acceso por roles: solo los administradores pueden gestionar las cartas y usar las funciones que consultan APIs externas.
 - Limitación de intentos (_rate limiting_) en los endpoints de registro e inicio de sesión.
-- Añadir cartas a la tienda por nombre, con sugerencias de autocompletado mientras escribes.
-- **Añadir cartas mediante una fotografía**: la API de Claude (visión) identifica el nombre de la carta y Scryfall proporciona sus datos oficiales.
-- Obtener automáticamente los datos e imágenes de las cartas mediante la [API de Scryfall](https://scryfall.com/docs/api).
-- Búsqueda tolerante a errores tipográficos: por ejemplo, "light bolt" encuentra _Lightning Bolt_.
-- Datos específicos de cada carta en la tienda: precio, stock y estado de conservación (NM, LP, MP, HP, DMG).
-- Buscar cartas en la tienda por nombre.
-- Editar el precio, el stock y el estado de conservación, así como eliminar cartas.
-- Protección contra duplicados: no se puede añadir dos veces la misma carta.
+- Cabeceras HTTP de protección con Helmet y límite de uso por usuario en la identificación mediante fotografías, que consume saldo de la API de Claude.
+
+### Experiencia de usuario
+
+- Enrutado con React Router: cada pantalla tiene su propia dirección (el botón Atrás funciona y se puede enlazar cualquier página), con diseño común, rutas protegidas por sesión y por rol, y página 404.
+- Diseño propio con tema oscuro de inspiración fantástica, construido con variables CSS y adaptado a móvil.
+- Cabecera fija estilo tienda online: icono de carrito con contador, menú de cuenta desplegable y aviso al añadir una carta al carrito.
+- Ventana modal de acceso construida con el elemento nativo `<dialog>` (foco atrapado y cierre con Escape).
+- Accesibilidad: navegación por teclado, enlace para saltar al contenido, etiquetas ARIA en los controles y respeto a la preferencia de menos animaciones.
+- Reintentos automáticos con espera creciente solo en las peticiones de lectura (GET), para evitar duplicar operaciones que modifican datos, como un pedido. Mientras el servidor gratuito despierta, la web avisa al usuario.
+
+### Calidad y despliegue
+
 - Pruebas automatizadas e integración continua mediante GitHub Actions.
 - Aplicación desplegada en internet (frontend y backend en Render, base de datos en MongoDB Atlas).
-- Seguridad adicional: cabeceras HTTP de protección con Helmet y límite de uso por usuario en la identificación mediante fotografías, que consume saldo de la API de Claude.
-- Carrito de compra guardado en el navegador y pedidos sin pago real: el servidor calcula los precios, comprueba el stock y descuenta las unidades de forma atómica dentro de una transacción.
-- Historial de pedidos para cada usuario y panel de pedidos para el administrador, que puede marcarlos como enviados o cancelarlos (al cancelar, el stock se devuelve a la tienda).
-- Filtros del catálogo por tipo de carta, color de maná y coste de maná, con ordenación y paginación. Los filtros se guardan en la dirección web, por lo que se pueden compartir.
-- Diseño propio con tema oscuro de inspiración fantástica, construido con variables CSS, adaptado a móvil y con navegación accesible por teclado.
-- Sección de carta destacada: una carta al azar con stock, mostrada con su imagen completa y sin modificar.
-- Ventana modal de acceso construida con el elemento nativo `<dialog>` (foco atrapado, cierre con Escape) y botón para localizar la carta destacada en el catálogo, con desplazamiento y resaltado.
-- Ventana de detalle de cada carta con texto de reglas, edición, rareza, color y coste de maná, con los símbolos de maná dibujados con CSS. Se construye con el elemento nativo `<dialog>` y se puede añadir al carrito desde ella.
-- Enlace compartible por carta (`?card=<id>`): abre directamente su ventana de detalle, con botón para copiar el enlace y aviso si la carta ya no existe.
 
 ## Autenticación y roles
 
@@ -99,7 +115,7 @@ Esta versión es una demostración: no hay pasarela de pago ni dirección de env
 
 | Capa                           | Tecnología                                                                            |
 | ------------------------------ | ------------------------------------------------------------------------------------- |
-| Frontend                       | React, Vite                                                                           |
+| Frontend                       | React, Vite, React Router                                                             |
 | Backend                        | Node.js, Express, Multer                                                              |
 | Base de datos                  | MongoDB Atlas, Mongoose                                                               |
 | Autenticación y seguridad      | JSON Web Tokens (`jsonwebtoken`), bcrypt (`bcryptjs`), `express-rate-limit`, `helmet` |
@@ -116,33 +132,45 @@ magic-card-store/
 │   ├── src/
 │   │   ├── middleware/  # Autenticación y control de roles (requireAuth, requireAdmin)
 │   │   ├── models/      # Esquemas de Mongoose (Card, User, Order)
+│   │   ├── routes/      # Rutas de Express (cartas, Scryfall, identificación, autenticación, pedidos)
 │   │   ├── services/    # Clientes de las APIs de Scryfall y Claude
-│   │   ├── routes/      # Rutas de Express(cartas, Scryfall, identificación, autenticación,orders)
-│   │   ├── utils/       # Traducción de filtros a consultas de MongoDB
-│   │   ├── scripts/     # Scripts de administración (make-admin)
+│   │   ├── utils/       # Traducción de filtros a consultas de MongoDB (cardQuery.js)
+│   │   ├── scripts/     # Scripts de administración (make-admin, backfill)
 │   │   ├── app.js       # Aplicación Express (middlewares, CORS y rutas)
 │   │   └── index.js     # Punto de entrada del servidor (conexión a la base de datos)
-│   └── tests/           # Pruebas de la API
+│   └── tests/           # Pruebas de la API y del traductor de filtros
 ├── frontend/
+│   ├── index.html       # Página base (título, tipografía y favicon)
+│   ├── vite.config.js   # Configuración de Vite (proxy de /api en desarrollo)
 │   └── src/
 │       ├── auth/        # Contexto de autenticación (AuthProvider, useAuth)
-│       ├── cart/        # Contexto del carrito
-│       ├── components/  # AddCardForm, AuthPanel, CardList, CardItem, CartView, OrdersView, FilterBar, Pagination, FeaturedCard
-│       ├── api.js       # Construcción de la URL de la API (VITE_API_URL)
-│       ├── filters.js   # Filtros por color, tipo, coste de maná
-│       └── App.jsx
+│       ├── cart/        # Contexto del carrito (CartProvider, useCart)
+│       ├── components/  # Piezas de interfaz: AccountMenu, AddCardForm, AuthPanel, CardItem,
+│       │                # CardList, CartToast, CartView, FeaturedCard, FilterBar, Icons,
+│       │                # ManaText, OrdersView, Pagination, SiteHeader
+│       ├── hooks/       # Hooks propios (useCatalogFilters, usePageTitle)
+│       ├── layout/      # Diseño común: cabecera, pie, aviso del carrito y <Outlet />
+│       ├── pages/       # Una página por ruta: CatalogPage, CardPage, CartPage,
+│       │                # OrdersPage, AdminOrdersPage, NotFoundPage
+│       ├── routes/      # Guardas de rutas: RequireAuth y RequireAdmin
+│       ├── api.js       # URL de la API (VITE_API_URL) y fetch con reintentos
+│       ├── filters.js   # Opciones de filtros y conversión desde y hacia la dirección web
+│       ├── scroll.js    # Desplazamiento suave que respeta la preferencia de menos animaciones
+│       ├── App.jsx      # Tabla de rutas
+│       ├── main.jsx     # Punto de entrada de React (BrowserRouter y proveedores)
+│       └── index.css    # Estilos y variables de diseño
 └── docs/                # Capturas de pantalla
 ```
 
 ## Endpoints de la API
 
 | Método | Endpoint                        | Acceso        | Descripción                                                                          |
-| ------ | ------------------------------- | ------------- | ------------------------------------------------------------------------------------ | --- |
+| ------ | ------------------------------- | ------------- | ------------------------------------------------------------------------------------ |
 | GET    | `/api/health`                   | Público       | Comprobar el estado del servidor                                                     |
 | POST   | `/api/auth/register`            | Público       | Crear una cuenta de cliente (`email`, `password`)                                    |
 | POST   | `/api/auth/login`               | Público       | Iniciar sesión y recibir un JWT                                                      |
 | GET    | `/api/auth/me`                  | Sesión        | Obtener el usuario asociado al token                                                 |
-| GET    | `/api/cards`                    | Público       | Obtener las cartas de la tienda con filtros, ordenación y paginación (ver más abajo) |     |
+| GET    | `/api/cards`                    | Público       | Obtener las cartas de la tienda con filtros, ordenación y paginación (ver más abajo) |
 | GET    | `/api/cards/featured`           | Público       | Obtener una carta al azar que tenga stock e imagen                                   |
 | GET    | `/api/cards/:id`                | Público       | Obtener una carta concreta                                                           |
 | POST   | `/api/cards`                    | Administrador | Añadir una carta (`name`, `price`, `stock`, `condition`)                             |
@@ -169,6 +197,19 @@ magic-card-store/
 | `limit`     | Cartas por página (por defecto, `12`; máximo, `50`)                                                              |
 
 La respuesta tiene la forma `{ cards, page, limit, total, totalPages }`. Los parámetros se validan con listas blancas y solo se aceptan textos, para evitar inyecciones de operadores de MongoDB. La traducción de parámetros a consulta está en `backend/src/utils/cardQuery.js` y tiene sus propios tests.
+
+## Rutas del frontend
+
+| Ruta             | Página                                               | Acceso        |
+| ---------------- | ---------------------------------------------------- | ------------- |
+| `/`              | Catálogo (filtros en la dirección: `?type=creature`) | Público       |
+| `/cartas/:id`    | Ficha de una carta                                   | Público       |
+| `/carrito`       | Carrito                                              | Público       |
+| `/pedidos`       | Mis pedidos                                          | Sesión        |
+| `/admin/pedidos` | Pedidos de la tienda                                 | Administrador |
+| `*`              | Página no encontrada                                 | Público       |
+
+Todas las páginas comparten un diseño común (`layout/Layout.jsx`) y las rutas protegidas se implementan con componentes de guarda (`RequireAuth` y `RequireAdmin`). Es una comodidad de la interfaz: la protección real está en el backend, que comprueba el token y el rol en cada petición.
 
 ## Puesta en marcha
 
@@ -236,7 +277,7 @@ npm run make-admin -- tu@email.com
 npm test
 ```
 
-Las pruebas comprueban los permisos (respuestas `401` y `403`) y las validaciones de la API, y no necesitan una base de datos ni claves API. También se ejecutan automáticamente en cada `push` mediante GitHub Actions.
+Las pruebas comprueban los permisos (respuestas `401` y `403`), las validaciones de la API y el traductor de filtros, y no necesitan una base de datos ni claves API. También se ejecutan automáticamente en cada `push` mediante GitHub Actions.
 
 ## Despliegue
 
@@ -252,13 +293,14 @@ Pasos resumidos:
 
 1. **Atlas**: crear un usuario de base de datos específico para producción y permitir el acceso desde cualquier IP en _Network Access_ (el servidor de Render no tiene una IP fija; la protección recae en el usuario y la contraseña).
 2. **Backend**: crear el _Web Service_ con las variables `NODE_ENV=production`, `NODE_VERSION`, `MONGODB_URI`, `JWT_SECRET`, `ANTHROPIC_API_KEY` y `FRONTEND_URL` (con la dirección del frontend). Los valores de producción deben ser distintos a los de desarrollo.
-3. **Frontend**: crear el _Static Site_ con `VITE_API_URL` (con la dirección del backend) y `NODE_VERSION`. Esta variable se incorpora al construir la web, por lo que, si cambia, hay que volver a desplegar.
+3. **Frontend**: crear el _Static Site_ con `VITE_API_URL` (con la dirección del backend) y `NODE_VERSION`. Esta variable se incorpora al construir la web, por lo que, si cambia, hay que volver a desplegar. Añadir además la regla de reescritura descrita más abajo.
 4. Comprobar que el backend responde en `/api/health` y que las peticiones del frontend no se bloquean por CORS.
 
 Notas del plan gratuito de Render:
 
 - El backend se duerme tras 15 minutos sin tráfico y tarda alrededor de un minuto en volver a arrancar.
 - El sistema de archivos es efímero. No afecta a esta aplicación: las fotografías se procesan en memoria y todos los datos se guardan en Atlas.
+- El frontend usa enrutado en el cliente: el sitio estático de Render necesita una regla de reescritura (`/*` → `/index.html`, acción _Rewrite_); si no, al recargar una dirección como `/carrito` se devuelve un 404.
 
 ## Notas de seguridad
 
@@ -269,7 +311,7 @@ Notas del plan gratuito de Render:
 - **Secretos**: el archivo `.env` está excluido del repositorio. Las plantillas `.env.example` indican las variables necesarias sin incluir valores reales.
 - **Cabeceras HTTP**: el backend usa Helmet para añadir cabeceras de seguridad y ocultar que funciona con Express.
 - **Control del gasto**: la identificación mediante fotografías está limitada a 30 peticiones por hora y usuario, y solo pueden usarla los administradores. Los contadores se guardan en memoria y se reinician con el servidor.
-- Reintentos automáticos con espera creciente solo en las peticiones de lectura (GET), para evitar duplicar operaciones que modifican datos, como un pedido.
+- **Validación en las dos capas**: los filtros que llegan por la dirección web se validan en el frontend y se vuelven a validar en el backend con listas blancas.
 
 ## Diseño y uso de imágenes
 
@@ -288,25 +330,32 @@ Notas del plan gratuito de Render:
 - **Los comandos `curl` fallan en PowerShell**: en PowerShell `curl` es un alias de otro comando. Usa Git Bash o `Invoke-RestMethod`.
 - **Error de CORS en la aplicación desplegada**: comprueba que `FRONTEND_URL` coincide exactamente con la dirección del frontend (con `https://` y sin barra final) y que `VITE_API_URL` apunta a un backend que existe. Si el backend estaba dormido, el error puede aparecer como CORS aunque la configuración sea correcta; espera a que arranque y recarga.
 - **La primera carga tarda o muestra «El servidor se está despertando»**: el backend está en un plan gratuito de Render que se duerme tras 15 minutos sin tráfico. La web reintenta automáticamente las peticiones de lectura durante algo más de un minuto, hasta que el servidor responde.
+- **Al recargar una dirección como `/carrito` en la aplicación desplegada aparece un 404**: falta la regla de reescritura del sitio estático en Render (`/*` → `/index.html`, acción _Rewrite_).
 
 ## Próximas mejoras
 
 - [x] Añadir cartas subiendo una fotografía, utilizando la API de Claude con capacidad de visión.
 - [x] Pruebas automatizadas e integración continua.
 - [x] Cuentas de usuario y autenticación (también necesarias para proteger el endpoint de pago de identificación mediante fotografías).
-- [x] Limitación de solicitudes (Rate limiting) en los endpoints de autenticación.
+- [x] Limitación de solicitudes (_rate limiting_) en los endpoints de autenticación.
 - [x] Despliegue de la aplicación.
 - [x] Base de datos separada para desarrollo y producción.
 - [x] Refuerzo de seguridad (cabeceras HTTP con Helmet y límite de uso en el endpoint de identificación).
 - [x] Carrito de compra y gestión de pedidos (sin pasarela de pago).
 - [x] Filtros por tipo, color y coste de maná, ordenación y paginación del catálogo.
+- [x] Enrutado con React Router: diseño común, rutas protegidas, ficha de carta compartible y página 404.
+- [ ] Panel de administración con rutas anidadas (`/admin`).
+- [ ] Detalle de un pedido (`/pedidos/:id`).
+- [ ] Página «Sobre el proyecto» con el stack y la arquitectura.
 - [ ] Pasarela de pago en modo de pruebas (Stripe).
 - [ ] Dirección de envío y notificaciones por email.
-- [ ] Rutas de navegación con React Router y paginación del catálogo.
+- [ ] Tests de integración con una base de datos en memoria.
+- [ ] Carrito guardado en el servidor, para sincronizarlo entre dispositivos.
 
 ## Créditos
 
 Los datos e imágenes de las cartas son proporcionados por [Scryfall](https://scryfall.com). _Magic: The Gathering_ es una marca registrada de Wizards of the Coast. Este es un proyecto de fans no oficial y no está afiliado ni cuenta con el respaldo de Wizards of the Coast o Scryfall.
+
 La tipografía de los títulos es [Cinzel](https://fonts.google.com/specimen/Cinzel), de Google Fonts.
 
 ## Licencia
