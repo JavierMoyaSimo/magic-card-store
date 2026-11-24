@@ -32,7 +32,7 @@ El catálogo es público y se puede consultar sin iniciar sesión. Para probar e
 
 ### Administración
 
-![Formulario de añadir cartas con autocompletado](docs/05-admin-anadir.png)
+![Panel de administración para añadir y gestionar cartas](docs/05-admin-anadir.png)
 
 ![Gestión de pedidos de la tienda](docs/06-admin-pedidos.png)
 
@@ -47,7 +47,7 @@ El catálogo es público y se puede consultar sin iniciar sesión. Para probar e
 
 ### Catálogo y compra
 
-- Catálogo público: cualquier visitante puede consultar y buscar las cartas de la tienda por nombre.
+- Catálogo público: cualquier visitante puede consultar y buscar las cartas de la tienda por nombre. Las herramientas de gestión no aparecen en la tienda: los administradores la ven igual que un cliente.
 - Filtros por tipo de carta, color de maná y coste de maná, con ordenación y paginación. Los filtros se guardan en la dirección web, por lo que se pueden compartir.
 - Ficha de cada carta (`/cartas/:id`) con texto de reglas, edición, rareza, color y coste de maná, con los símbolos de maná dibujados con CSS. Se puede copiar su enlace y añadirla al carrito desde ella.
 - Sección de carta destacada: una carta al azar con stock, mostrada con su imagen completa y sin modificar.
@@ -57,10 +57,11 @@ El catálogo es público y se puede consultar sin iniciar sesión. Para probar e
 
 ### Administración
 
+- Panel de administración (`/admin`) con rutas anidadas y dos pestañas: cartas y pedidos.
+- Gestión de cartas en una tabla con buscador y paginación (guardados en la dirección web): añadir cartas, editar el precio, el stock y el estado de conservación (NM, LP, MP, HP, DMG) en la propia fila, y eliminarlas.
 - Añadir cartas a la tienda por nombre, con sugerencias de autocompletado mientras escribes.
 - **Añadir cartas mediante una fotografía**: la API de Claude (visión) identifica el nombre de la carta y Scryfall proporciona sus datos oficiales.
 - Obtener automáticamente los datos e imágenes de las cartas mediante la [API de Scryfall](https://scryfall.com/docs/api), con búsqueda tolerante a errores tipográficos (por ejemplo, "light bolt" encuentra _Lightning Bolt_).
-- Editar el precio, el stock y el estado de conservación (NM, LP, MP, HP, DMG), y eliminar cartas.
 - Protección contra duplicados: no se puede añadir dos veces la misma carta.
 - Panel de pedidos de la tienda: el administrador puede marcarlos como enviados o cancelarlos (al cancelar, el stock se devuelve a la tienda).
 
@@ -73,9 +74,9 @@ El catálogo es público y se puede consultar sin iniciar sesión. Para probar e
 
 ### Experiencia de usuario
 
-- Enrutado con React Router: cada pantalla tiene su propia dirección (el botón Atrás funciona y se puede enlazar cualquier página), con diseño común, rutas protegidas por sesión y por rol, y página 404.
+- Enrutado con React Router: cada pantalla tiene su propia dirección (el botón Atrás funciona y se puede enlazar cualquier página), con diseño común, rutas anidadas, rutas protegidas por sesión y por rol, y página 404.
 - Diseño propio con tema oscuro de inspiración fantástica, construido con variables CSS y adaptado a móvil.
-- Cabecera fija estilo tienda online: icono de carrito con contador, menú de cuenta desplegable y aviso al añadir una carta al carrito.
+- Cabecera fija estilo tienda online: icono de carrito con contador, menú de cuenta desplegable (con acceso al panel para los administradores) y aviso al añadir una carta al carrito.
 - Ventana modal de acceso construida con el elemento nativo `<dialog>` (foco atrapado y cierre con Escape).
 - Accesibilidad: navegación por teclado, enlace para saltar al contenido, etiquetas ARIA en los controles y respeto a la preferencia de menos animaciones.
 - Reintentos automáticos con espera creciente solo en las peticiones de lectura (GET), para evitar duplicar operaciones que modifican datos, como un pedido. Mientras el servidor gratuito despierta, la web avisa al usuario.
@@ -145,13 +146,13 @@ magic-card-store/
 │   └── src/
 │       ├── auth/        # Contexto de autenticación (AuthProvider, useAuth)
 │       ├── cart/        # Contexto del carrito (CartProvider, useCart)
-│       ├── components/  # Piezas de interfaz: AccountMenu, AddCardForm, AuthPanel, CardItem,
-│       │                # CardList, CartToast, CartView, FeaturedCard, FilterBar, Icons,
-│       │                # ManaText, OrdersView, Pagination, SiteHeader
+│       ├── components/  # Piezas de interfaz: AccountMenu, AddCardForm, AdminCardRow, AuthPanel,
+│       │                # CardItem, CardList, CartToast, CartView, FeaturedCard, FilterBar,
+│       │                # Icons, ManaText, OrdersView, Pagination, SiteHeader
 │       ├── hooks/       # Hooks propios (useCatalogFilters, usePageTitle)
-│       ├── layout/      # Diseño común: cabecera, pie, aviso del carrito y <Outlet />
-│       ├── pages/       # Una página por ruta: CatalogPage, CardPage, CartPage,
-│       │                # OrdersPage, AdminOrdersPage, NotFoundPage
+│       ├── layout/      # Diseños con <Outlet />: Layout (cabecera y pie) y AdminLayout (pestañas)
+│       ├── pages/       # Una página por ruta: CatalogPage, CardPage, CartPage, OrdersPage,
+│       │                # AdminCardsPage, AdminOrdersPage, NotFoundPage
 │       ├── routes/      # Guardas de rutas: RequireAuth y RequireAdmin
 │       ├── api.js       # URL de la API (VITE_API_URL) y fetch con reintentos
 │       ├── filters.js   # Opciones de filtros y conversión desde y hacia la dirección web
@@ -206,10 +207,12 @@ La respuesta tiene la forma `{ cards, page, limit, total, totalPages }`. Los par
 | `/cartas/:id`    | Ficha de una carta                                   | Público       |
 | `/carrito`       | Carrito                                              | Público       |
 | `/pedidos`       | Mis pedidos                                          | Sesión        |
+| `/admin`         | Panel de administración (redirige a `/admin/cartas`) | Administrador |
+| `/admin/cartas`  | Gestión de cartas: añadir, buscar, editar y eliminar | Administrador |
 | `/admin/pedidos` | Pedidos de la tienda                                 | Administrador |
 | `*`              | Página no encontrada                                 | Público       |
 
-Todas las páginas comparten un diseño común (`layout/Layout.jsx`) y las rutas protegidas se implementan con componentes de guarda (`RequireAuth` y `RequireAdmin`). Es una comodidad de la interfaz: la protección real está en el backend, que comprueba el token y el rol en cada petición.
+Todas las páginas comparten un diseño común (`layout/Layout.jsx`) y el panel de administración añade el suyo (`layout/AdminLayout.jsx`) con rutas anidadas. Las rutas protegidas se implementan con componentes de guarda (`RequireAuth` y `RequireAdmin`). Es una comodidad de la interfaz: la protección real está en el backend, que comprueba el token y el rol en cada petición.
 
 ## Puesta en marcha
 
@@ -269,7 +272,7 @@ Toda cuenta nueva se crea con el rol `customer`. Para gestionar la tienda:
 npm run make-admin -- tu@email.com
 ```
 
-3. Cierra sesión y vuelve a iniciarla para que se aplique el nuevo rol.
+3. Cierra sesión y vuelve a iniciarla para que se aplique el nuevo rol. Después, el menú de tu cuenta mostrará el acceso al panel de administración.
 
 ### Ejecución de las pruebas
 
@@ -300,7 +303,7 @@ Notas del plan gratuito de Render:
 
 - El backend se duerme tras 15 minutos sin tráfico y tarda alrededor de un minuto en volver a arrancar.
 - El sistema de archivos es efímero. No afecta a esta aplicación: las fotografías se procesan en memoria y todos los datos se guardan en Atlas.
-- El frontend usa enrutado en el cliente: el sitio estático de Render necesita una regla de reescritura (`/*` → `/index.html`, acción _Rewrite_); si no, al recargar una dirección como `/carrito` se devuelve un 404.
+- El frontend usa enrutado en el cliente: el sitio estático de Render necesita una regla de reescritura (`/*` → `/index.html`, acción _Rewrite_); si no, al recargar una dirección como `/carrito` o `/admin/cartas` se devuelve un 404.
 
 ## Notas de seguridad
 
@@ -311,7 +314,7 @@ Notas del plan gratuito de Render:
 - **Secretos**: el archivo `.env` está excluido del repositorio. Las plantillas `.env.example` indican las variables necesarias sin incluir valores reales.
 - **Cabeceras HTTP**: el backend usa Helmet para añadir cabeceras de seguridad y ocultar que funciona con Express.
 - **Control del gasto**: la identificación mediante fotografías está limitada a 30 peticiones por hora y usuario, y solo pueden usarla los administradores. Los contadores se guardan en memoria y se reinician con el servidor.
-- **Validación en las dos capas**: los filtros que llegan por la dirección web se validan en el frontend y se vuelven a validar en el backend con listas blancas.
+- **Validación en las dos capas**: los filtros que llegan por la dirección web, y los datos que se editan en el panel, se validan en el frontend y se vuelven a validar en el backend.
 
 ## Diseño y uso de imágenes
 
@@ -325,7 +328,7 @@ Notas del plan gratuito de Render:
 - **Error `querySrv ECONNREFUSED` al conectar con MongoDB**: algunas redes bloquean las consultas DNS SRV utilizadas por las URL `mongodb+srv://`. El backend configura servidores DNS públicos (Google y Cloudflare) en `src/index.js` para solucionar este problema.
 - **Tiempo de espera de conexión agotado**: comprueba que tu dirección IP actual esté autorizada en Atlas, dentro de _Network Access_.
 - **El servidor se detiene con el mensaje "Falta JWT_SECRET"**: añade la variable `JWT_SECRET` a `backend/.env` y reinicia el backend.
-- **Tras ejecutar `make-admin` no aparecen los controles de administración**: cierra sesión y vuelve a iniciarla, ya que el rol viaja dentro del token.
+- **Tras ejecutar `make-admin` no aparece el acceso al panel de administración**: cierra sesión y vuelve a iniciarla, ya que el rol viaja dentro del token.
 - **La identificación mediante fotografías falla con un error de autenticación**: comprueba que `ANTHROPIC_API_KEY` esté configurada en `backend/.env` y reinicia el backend.
 - **Los comandos `curl` fallan en PowerShell**: en PowerShell `curl` es un alias de otro comando. Usa Git Bash o `Invoke-RestMethod`.
 - **Error de CORS en la aplicación desplegada**: comprueba que `FRONTEND_URL` coincide exactamente con la dirección del frontend (con `https://` y sin barra final) y que `VITE_API_URL` apunta a un backend que existe. Si el backend estaba dormido, el error puede aparecer como CORS aunque la configuración sea correcta; espera a que arranque y recarga.
@@ -344,7 +347,7 @@ Notas del plan gratuito de Render:
 - [x] Carrito de compra y gestión de pedidos (sin pasarela de pago).
 - [x] Filtros por tipo, color y coste de maná, ordenación y paginación del catálogo.
 - [x] Enrutado con React Router: diseño común, rutas protegidas, ficha de carta compartible y página 404.
-- [ ] Panel de administración con rutas anidadas (`/admin`).
+- [x] Panel de administración con rutas anidadas (`/admin`).
 - [ ] Detalle de un pedido (`/pedidos/:id`).
 - [ ] Página «Sobre el proyecto» con el stack y la arquitectura.
 - [ ] Pasarela de pago en modo de pruebas (Stripe).
