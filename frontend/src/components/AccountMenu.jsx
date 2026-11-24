@@ -80,8 +80,8 @@ function AccountMenu({ onOpenLogin, onLogout }) {
           </Link>
 
           {isAdmin && (
-            <Link to="/admin/pedidos" onClick={() => setOpen(false)}>
-              Pedidos de la tienda
+            <Link to="/admin" onClick={() => setOpen(false)}>
+              Panel de administración
             </Link>
           )}
 

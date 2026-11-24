@@ -1,17 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import CardList from "../components/CardList.jsx";
-import AddCardForm from "../components/AddCardForm.jsx";
 import FilterBar from "../components/FilterBar.jsx";
 import Pagination from "../components/Pagination.jsx";
 import FeaturedCard from "../components/FeaturedCard.jsx";
-import { useAuth } from "../auth/useAuth.js";
 import { fetchWithRetry } from "../api.js";
 import { DEFAULT_FILTERS, PAGE_SIZE, buildParams } from "../filters.js";
 import { useCatalogFilters } from "../hooks/useCatalogFilters.js";
 import { scrollBehavior } from "../scroll.js";
 
 function CatalogPage() {
-  const { isAdmin } = useAuth();
   const { filters, updateFilters, resetFilters } = useCatalogFilters();
 
   const [cards, setCards] = useState([]);
@@ -101,10 +98,6 @@ function CatalogPage() {
     return () => clearTimeout(timer);
   }, [highlightId, cards]);
 
-  function reloadCards() {
-    setRefreshKey((current) => current + 1);
-  }
-
   // Botón "Reintentar" cuando la carga falla del todo
   function retryLoad() {
     setError(null);
@@ -152,8 +145,6 @@ function CatalogPage() {
     <>
       <FeaturedCard onSelect={showCardInCatalog} />
 
-      {isAdmin && <AddCardForm onCardAdded={reloadCards} />}
-
       <div ref={catalogRef} className="catalog-section">
         <FilterBar
           filters={filters}
@@ -175,7 +166,6 @@ function CatalogPage() {
           waking={waking}
           hasFilters={hasFilters}
           highlightId={highlightId}
-          onChanged={reloadCards}
           onRetry={retryLoad}
         />
 

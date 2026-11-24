@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router";
 import { fetchWithRetry } from "../api.js";
+import { useAuth } from "../auth/useAuth.js";
 import { useCart } from "../cart/useCart.js";
 import { usePageTitle } from "../hooks/usePageTitle.js";
 import ManaText from "../components/ManaText.jsx";
@@ -41,6 +42,7 @@ function CardPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const { isAdmin } = useAuth();
   const { items, addItem } = useCart();
 
   // Resultado de pedir la carta, junto con el id al que corresponde
@@ -257,6 +259,14 @@ function CardPage() {
               >
                 {copied ? "Enlace copiado ✓" : "Copiar enlace"}
               </button>
+              {isAdmin && (
+                <Link
+                  to={`/admin/cartas?search=${encodeURIComponent(card.name)}`}
+                  className="button-link"
+                >
+                  Gestionar
+                </Link>
+              )}
             </div>
           </div>
         </div>

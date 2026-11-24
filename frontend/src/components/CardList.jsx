@@ -7,7 +7,6 @@ function CardList({
   waking,
   hasFilters,
   highlightId,
-  onChanged,
   onRetry,
 }) {
   if (loading) {
@@ -57,7 +56,6 @@ function CardList({
         <CardItem
           key={card._id}
           card={card}
-          onChanged={onChanged}
           highlighted={card._id === highlightId}
         />
       ))}
