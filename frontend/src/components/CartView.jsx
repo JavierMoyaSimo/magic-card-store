@@ -40,7 +40,7 @@ function CartView({ onOrderPlaced, onNeedLogin, onBrowse }) {
       }
 
       clearCart();
-      onOrderPlaced();
+      onOrderPlaced(data); // data es el pedido que acaba de crear el servidor
     } catch (err) {
       setError(err.message);
     } finally {

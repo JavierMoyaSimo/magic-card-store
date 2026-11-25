@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import Card from "../models/Card.js";
 import Order from "../models/Order.js";
 import { requireAdmin } from "../middleware/auth.js";
+import { canViewOrder } from "../utils/orderAccess.js";
 
 const router = Router();
 
@@ -151,6 +152,29 @@ router.get("/", requireAdmin, async (req, res) => {
       .sort({ createdAt: -1 })
       .populate("user", "email");
     res.json(orders);
+  } catch (error) {
+    handleError(res, error);
+  }
+});
+
+// GET /api/orders/:id   Un pedido concreto (de su dueño o, si es administrador, de cualquiera)
+router.get("/:id", async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+
+    // Si no existe o es de otra persona, respondemos exactamente lo mismo: 404.
+    // Un 403 confirmaría que ese identificador existe.
+    if (!canViewOrder(order, req.user)) {
+      return res.status(404).json({ error: "Pedido no encontrado" });
+    }
+
+    // Al administrador le añadimos el email del cliente
+    // populate: resolver referencias entre documentos.
+    if (req.user.role === "admin") {
+      await order.populate("user", "email"); // esto devuelve un objeto con { _id, email } en order.user
+    }
+
+    res.json(order);
   } catch (error) {
     handleError(res, error);
   }

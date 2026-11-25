@@ -274,4 +274,18 @@ describe("Orders", () => {
 
     assert.equal(res.status, 400);
   });
+
+  test("GET /api/orders/:id sin sesión devuelve 401", async () => {
+    const res = await request(app).get(`/api/orders/${FAKE_ID}`);
+
+    assert.equal(res.status, 401);
+  });
+
+  test("GET /api/orders/:id con un id inválido devuelve 400", async () => {
+    const res = await request(app)
+      .get("/api/orders/no-es-un-id")
+      .set(authHeader("customer"));
+
+    assert.equal(res.status, 400);
+  });
 });

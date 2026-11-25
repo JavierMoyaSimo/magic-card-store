@@ -1,12 +1,8 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router";
 import { useAuth } from "../auth/useAuth.js";
-import { apiUrl } from "../api.js";
-
-const STATUS_LABELS = {
-  pending: "Pendiente",
-  shipped: "Enviado",
-  cancelled: "Cancelado",
-};
+import { apiUrl, fetchWithRetry } from "../api.js";
+import { STATUS_LABELS, formatDate, orderNumber } from "../orders.js";
 
 function OrdersView({ admin = false }) {
   const { token } = useAuth();
@@ -19,12 +15,14 @@ function OrdersView({ admin = false }) {
 
   useEffect(() => {
     let ignore = false;
+    const controller = new AbortController();
 
     async function loadOrders() {
       try {
         const path = admin ? "/api/orders" : "/api/orders/mine";
-        const response = await fetch(apiUrl(path), {
+        const response = await fetchWithRetry(path, {
           headers: { Authorization: `Bearer ${token}` },
+          signal: controller.signal,
         });
         const data = await response.json();
 
@@ -46,6 +44,7 @@ function OrdersView({ admin = false }) {
 
     return () => {
       ignore = true;
+      controller.abort();
     };
   }, [admin, token, refreshKey]);
 
@@ -91,7 +90,10 @@ function OrdersView({ admin = false }) {
       {orders.map((order) => (
         <article key={order._id} className="order">
           <div className="order-head">
-            <span>{new Date(order.createdAt).toLocaleString("es-ES")}</span>
+            <Link to={`/pedidos/${order._id}`} className="order-number">
+              Pedido {orderNumber(order)}
+            </Link>
+            <span>{formatDate(order.createdAt)}</span>
             {admin && <span>{order.user?.email ?? "Usuario eliminado"}</span>}
             <span className={`status ${order.status}`}>
               {STATUS_LABELS[order.status]}
@@ -107,7 +109,12 @@ function OrdersView({ admin = false }) {
             ))}
           </ul>
 
-          <p className="price">Total: {order.total.toFixed(2)} €</p>
+          <div className="order-footer">
+            <p className="price">Total: {order.total.toFixed(2)} €</p>
+            <Link to={`/pedidos/${order._id}`} className="button-link">
+              Ver detalle
+            </Link>
+          </div>
 
           {order.status === "cancelled" && (
             <p className="hint">

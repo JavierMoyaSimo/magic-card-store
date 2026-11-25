@@ -7,6 +7,7 @@ import CatalogPage from "./pages/CatalogPage.jsx";
 import CardPage from "./pages/CardPage.jsx";
 import CartPage from "./pages/CartPage.jsx";
 import OrdersPage from "./pages/OrdersPage.jsx";
+import OrderDetailPage from "./pages/OrderDetailPage.jsx";
 import AdminCardsPage from "./pages/AdminCardsPage.jsx";
 import AdminOrdersPage from "./pages/AdminOrdersPage.jsx";
 import NotFoundPage from "./pages/NotFoundPage.jsx";
@@ -22,7 +23,11 @@ function App() {
 
         {/* Rutas que exigen sesión */}
         <Route element={<RequireAuth />}>
-          <Route path="pedidos" element={<OrdersPage />} />
+          {/* «pedidos» no tiene página propia: agrupa a sus hijas (la lista y el detalle) */}
+          <Route path="pedidos">
+            <Route index element={<OrdersPage />} />
+            <Route path=":id" element={<OrderDetailPage />} />
+          </Route>
 
           {/* Y dentro de ellas, las que exigen además ser administrador */}
           <Route element={<RequireAdmin />}>

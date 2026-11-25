@@ -1711,3 +1711,73 @@ body:has(dialog[open]) {
   white-space: nowrap;
   border: 0;
 }
+
+/* ===== Pedidos: enlace al detalle y página de detalle ===== */
+.order-number {
+  font-weight: 700;
+  color: var(--gold-strong);
+  text-decoration: none;
+}
+
+.order-number:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.order-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.order-footer p {
+  margin: 0;
+}
+
+.order-detail-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.order-detail-head h2 {
+  margin: 0;
+}
+
+.order-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px 16px;
+  margin: 0 0 16px;
+}
+
+.order-meta dt {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.order-meta dd {
+  margin: 0;
+}
+
+/* Las columnas numéricas (cantidad, precios) van alineadas a la derecha */
+.order-table th:nth-child(n + 3),
+.order-table td:nth-child(n + 3) {
+  text-align: right;
+}
+
+.order-total {
+  font-size: 1.2rem;
+  text-align: right;
+}
+
+.order-total strong {
+  color: var(--gold-strong);
+}

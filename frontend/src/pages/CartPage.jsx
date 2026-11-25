@@ -11,8 +11,8 @@ function CartPage() {
   return (
     <CartView
       // useNavigate permite navegar desde el código; state viaja con la navegación
-      onOrderPlaced={() =>
-        navigate("/pedidos", { state: { orderPlaced: true } })
+      onOrderPlaced={(order) =>
+        navigate(`/pedidos/${order._id}`, { state: { orderPlaced: true } })
       }
       onNeedLogin={openLogin}
       onBrowse={() => navigate("/")}
