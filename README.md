@@ -53,7 +53,7 @@ El catálogo es público y se puede consultar sin iniciar sesión. Para probar e
 - Sección de carta destacada: una carta al azar con stock, mostrada con su imagen completa y sin modificar.
 - Carrito de compra guardado en el navegador, con el stock disponible calculado a partir de lo que ya llevas en él.
 - Pedidos sin pago real: el servidor calcula los precios, comprueba el stock y descuenta las unidades de forma atómica dentro de una transacción.
-- Historial de pedidos para cada usuario.
+- Historial de pedidos y página de detalle de cada pedido (`/pedidos/:id`), con sus líneas, subtotales, total y estado. El pedido solo lo puede ver su dueño o un administrador.
 
 ### Administración
 
@@ -135,7 +135,7 @@ magic-card-store/
 │   │   ├── models/      # Esquemas de Mongoose (Card, User, Order)
 │   │   ├── routes/      # Rutas de Express (cartas, Scryfall, identificación, autenticación, pedidos)
 │   │   ├── services/    # Clientes de las APIs de Scryfall y Claude
-│   │   ├── utils/       # Traducción de filtros a consultas de MongoDB (cardQuery.js)
+│   │   ├── utils/       # Traducción de filtros a consultas de MongoDB (cardQuery.js) y control de acceso de pedidos(orderAccess.js)
 │   │   ├── scripts/     # Scripts de administración (make-admin, backfill)
 │   │   ├── app.js       # Aplicación Express (middlewares, CORS y rutas)
 │   │   └── index.js     # Punto de entrada del servidor (conexión a la base de datos)
@@ -151,11 +151,12 @@ magic-card-store/
 │       │                # Icons, ManaText, OrdersView, Pagination, SiteHeader
 │       ├── hooks/       # Hooks propios (useCatalogFilters, usePageTitle)
 │       ├── layout/      # Diseños con <Outlet />: Layout (cabecera y pie) y AdminLayout (pestañas)
-│       ├── pages/       # Una página por ruta: CatalogPage, CardPage, CartPage, OrdersPage,
+│       ├── pages/       # Una página por ruta: CatalogPage, CardPage, CartPage, OrdersPage, OrderDetailPage
 │       │                # AdminCardsPage, AdminOrdersPage, NotFoundPage
 │       ├── routes/      # Guardas de rutas: RequireAuth y RequireAdmin
 │       ├── api.js       # URL de la API (VITE_API_URL) y fetch con reintentos
 │       ├── filters.js   # Opciones de filtros y conversión desde y hacia la dirección web
+│       ├── orders.js    # Estados y número del pedido
 │       ├── scroll.js    # Desplazamiento suave que respeta la preferencia de menos animaciones
 │       ├── App.jsx      # Tabla de rutas
 │       ├── main.jsx     # Punto de entrada de React (BrowserRouter y proveedores)
@@ -183,6 +184,7 @@ magic-card-store/
 | POST   | `/api/orders`                   | Sesión        | Crear un pedido (`items`: lista de `cardId` y `quantity`)                            |
 | GET    | `/api/orders/mine`              | Sesión        | Obtener los pedidos del usuario                                                      |
 | GET    | `/api/orders`                   | Administrador | Obtener todos los pedidos                                                            |
+| GET    | `/api/orders/:id`               | Sesión        | Obtener un pedido (solo su dueño o un administrador; para el resto responde 404)     |
 | PATCH  | `/api/orders/:id/status`        | Administrador | Marcar un pedido como enviado (`shipped`) o cancelarlo (`cancelled`)                 |
 
 ### Filtros, ordenación y paginación de `GET /api/cards`
@@ -207,6 +209,7 @@ La respuesta tiene la forma `{ cards, page, limit, total, totalPages }`. Los par
 | `/cartas/:id`    | Ficha de una carta                                   | Público       |
 | `/carrito`       | Carrito                                              | Público       |
 | `/pedidos`       | Mis pedidos                                          | Sesión        |
+| `/pedidos/:id`   | Detalle de un pedido                                 | Sesión        |
 | `/admin`         | Panel de administración (redirige a `/admin/cartas`) | Administrador |
 | `/admin/cartas`  | Gestión de cartas: añadir, buscar, editar y eliminar | Administrador |
 | `/admin/pedidos` | Pedidos de la tienda                                 | Administrador |
@@ -315,6 +318,7 @@ Notas del plan gratuito de Render:
 - **Cabeceras HTTP**: el backend usa Helmet para añadir cabeceras de seguridad y ocultar que funciona con Express.
 - **Control del gasto**: la identificación mediante fotografías está limitada a 30 peticiones por hora y usuario, y solo pueden usarla los administradores. Los contadores se guardan en memoria y se reinician con el servidor.
 - **Validación en las dos capas**: los filtros que llegan por la dirección web, y los datos que se editan en el panel, se validan en el frontend y se vuelven a validar en el backend.
+- **Control de acceso por objeto**: `GET /api/orders/:id` comprueba en el servidor que el pedido pertenece al usuario o que este es administrador. Si no, responde 404 (igual que si no existiera) para no confirmar qué identificadores existen. La regla está en una función pura (`utils/orderAccess.js`) con sus propios tests.
 
 ## Diseño y uso de imágenes
 
@@ -348,7 +352,7 @@ Notas del plan gratuito de Render:
 - [x] Filtros por tipo, color y coste de maná, ordenación y paginación del catálogo.
 - [x] Enrutado con React Router: diseño común, rutas protegidas, ficha de carta compartible y página 404.
 - [x] Panel de administración con rutas anidadas (`/admin`).
-- [ ] Detalle de un pedido (`/pedidos/:id`).
+- [x] Detalle de un pedido (`/pedidos/:id`).
 - [ ] Página «Sobre el proyecto» con el stack y la arquitectura.
 - [ ] Pasarela de pago en modo de pruebas (Stripe).
 - [ ] Dirección de envío y notificaciones por email.
