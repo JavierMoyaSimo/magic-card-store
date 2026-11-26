@@ -1,3 +1,4 @@
+import { lazy } from "react";
 import { Navigate, Route, Routes } from "react-router";
 import Layout from "./layout/Layout.jsx";
 import AdminLayout from "./layout/AdminLayout.jsx";
@@ -8,9 +9,13 @@ import CardPage from "./pages/CardPage.jsx";
 import CartPage from "./pages/CartPage.jsx";
 import OrdersPage from "./pages/OrdersPage.jsx";
 import OrderDetailPage from "./pages/OrderDetailPage.jsx";
-import AdminCardsPage from "./pages/AdminCardsPage.jsx";
-import AdminOrdersPage from "./pages/AdminOrdersPage.jsx";
 import NotFoundPage from "./pages/NotFoundPage.jsx";
+
+// Páginas diferidas: su código se descarga solo cuando alguien las visita.
+// Un cliente nunca descarga el código del panel de administración.
+const AboutPage = lazy(() => import("./pages/AboutPage.jsx"));
+const AdminCardsPage = lazy(() => import("./pages/AdminCardsPage.jsx"));
+const AdminOrdersPage = lazy(() => import("./pages/AdminOrdersPage.jsx"));
 
 function App() {
   return (
@@ -20,6 +25,7 @@ function App() {
         <Route index element={<CatalogPage />} />
         <Route path="cartas/:id" element={<CardPage />} />
         <Route path="carrito" element={<CartPage />} />
+        <Route path="proyecto" element={<AboutPage />} />
 
         {/* Rutas que exigen sesión */}
         <Route element={<RequireAuth />}>

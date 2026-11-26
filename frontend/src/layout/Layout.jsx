@@ -1,5 +1,8 @@
-import { useEffect, useState } from "react";
-import { Outlet, useLocation, useNavigate } from "react-router";
+import { Suspense, useEffect, useState } from "react";
+import { Link, Outlet, useLocation, useNavigate } from "react-router";
+import ErrorBoundary from "../components/ErrorBoundary.jsx";
+import PageFallback from "../components/PageFallback.jsx";
+import { REPO_URL } from "../aboutData.js";
 import SiteHeader from "../components/SiteHeader.jsx";
 import AuthPanel from "../components/AuthPanel.jsx";
 import CartToast from "../components/CartToast.jsx";
@@ -46,12 +49,22 @@ function Layout() {
       <main id="main" className="container">
         {showAuth && !user && <AuthPanel onClose={() => setShowAuth(false)} />}
 
-        {/* Aquí se dibuja la página de la ruta actual. El contexto se lo pasa a las páginas */}
-        <Outlet context={{ openLogin }} />
+        {/* La key reinicia el límite de error al cambiar de página; Suspense cubre las páginas diferidas */}
+        <ErrorBoundary key={pathname}>
+          <Suspense fallback={<PageFallback />}>
+            <Outlet context={{ openLogin }} />
+          </Suspense>
+        </ErrorBoundary>
       </main>
 
       <footer className="app-footer">
         <div className="footer-inner">
+          <nav className="footer-links" aria-label="Enlaces del pie">
+            <Link to="/proyecto">Sobre el proyecto</Link>
+            <a href={REPO_URL} target="_blank" rel="noreferrer">
+              Código en GitHub
+            </a>
+          </nav>
           <p>
             Datos e imágenes de las cartas:{" "}
             <a href="https://scryfall.com" target="_blank" rel="noreferrer">
