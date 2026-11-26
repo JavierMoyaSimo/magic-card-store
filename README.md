@@ -22,25 +22,30 @@ El catálogo es público y se puede consultar sin iniciar sesión. Para probar e
 
 ![Catálogo filtrado por tipo y color, con paginación](docs/02-filtros.png)
 
-### Detalle de una carta
+### Ficha de una carta
 
-![Detalle de una carta con texto de reglas y símbolos de maná](docs/03-detalle.png)
+![Ficha de una carta con texto de reglas y símbolos de maná](docs/03-detalle.png)
 
-### Carrito
+### Carrito y pedidos
 
 ![Carrito con varias cartas y el total](docs/04-carrito.png)
 
-### Administración
+![Detalle de un pedido con sus líneas, el total y el estado](docs/09-pedido-detalle.png)
 
-![Panel de administración para añadir y gestionar cartas](docs/05-admin-anadir.png)
+### Panel de administración
+
+![Gestión de cartas: formulario de añadir y tabla editable](docs/05-admin-anadir.png)
 
 ![Gestión de pedidos de la tienda](docs/06-admin-pedidos.png)
+
+### Sobre el proyecto
+
+![Página «Sobre el proyecto» con el diagrama de arquitectura](docs/10-proyecto.png)
 
 ### Móvil
 
 <p align="center">
-  <img src="docs/07-movil-catalogo.png" width="260" alt="Catálogo en móvil" />
-  <img src="docs/08-movil-detalle.png" width="260" alt="Detalle de una carta en móvil" />
+  <img src="docs/08-movil-detalle.png" width="260" alt="Ficha de una carta en móvil" />
 </p>
 
 ## Funcionalidades
