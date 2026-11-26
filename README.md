@@ -80,6 +80,8 @@ El catálogo es público y se puede consultar sin iniciar sesión. Para probar e
 - Ventana modal de acceso construida con el elemento nativo `<dialog>` (foco atrapado y cierre con Escape).
 - Accesibilidad: navegación por teclado, enlace para saltar al contenido, etiquetas ARIA en los controles y respeto a la preferencia de menos animaciones.
 - Reintentos automáticos con espera creciente solo en las peticiones de lectura (GET), para evitar duplicar operaciones que modifican datos, como un pedido. Mientras el servidor gratuito despierta, la web avisa al usuario.
+- Página «Sobre el proyecto» (`/proyecto`) con la arquitectura, las tecnologías y las decisiones técnicas.
+- Carga diferida de rutas (`React.lazy` y `Suspense`): las páginas poco visitadas, como el panel de administración, solo se descargan cuando se usan. Un límite de error (`ErrorBoundary`) protege el caso de que una página diferida no consiga descargarse, por ejemplo tras un despliegue nuevo.
 
 ### Calidad y despliegue
 
@@ -148,15 +150,16 @@ magic-card-store/
 │       ├── cart/        # Contexto del carrito (CartProvider, useCart)
 │       ├── components/  # Piezas de interfaz: AccountMenu, AddCardForm, AdminCardRow, AuthPanel,
 │       │                # CardItem, CardList, CartToast, CartView, FeaturedCard, FilterBar,
-│       │                # Icons, ManaText, OrdersView, Pagination, SiteHeader
+│       │                # Icons, ManaText, OrdersView, Pagination, SiteHeader, ErrorBoundary, PageFallback
 │       ├── hooks/       # Hooks propios (useCatalogFilters, usePageTitle)
 │       ├── layout/      # Diseños con <Outlet />: Layout (cabecera y pie) y AdminLayout (pestañas)
 │       ├── pages/       # Una página por ruta: CatalogPage, CardPage, CartPage, OrdersPage, OrderDetailPage
-│       │                # AdminCardsPage, AdminOrdersPage, NotFoundPage
+│       │                # AdminCardsPage, AdminOrdersPage, NotFoundPage, AboutPage
 │       ├── routes/      # Guardas de rutas: RequireAuth y RequireAdmin
 │       ├── api.js       # URL de la API (VITE_API_URL) y fetch con reintentos
 │       ├── filters.js   # Opciones de filtros y conversión desde y hacia la dirección web
 │       ├── orders.js    # Estados y número del pedido
+│       ├── aboutData.js # Contenido de la página : "Sobre el proyecto"
 │       ├── scroll.js    # Desplazamiento suave que respeta la preferencia de menos animaciones
 │       ├── App.jsx      # Tabla de rutas
 │       ├── main.jsx     # Punto de entrada de React (BrowserRouter y proveedores)
@@ -203,17 +206,18 @@ La respuesta tiene la forma `{ cards, page, limit, total, totalPages }`. Los par
 
 ## Rutas del frontend
 
-| Ruta             | Página                                               | Acceso        |
-| ---------------- | ---------------------------------------------------- | ------------- |
-| `/`              | Catálogo (filtros en la dirección: `?type=creature`) | Público       |
-| `/cartas/:id`    | Ficha de una carta                                   | Público       |
-| `/carrito`       | Carrito                                              | Público       |
-| `/pedidos`       | Mis pedidos                                          | Sesión        |
-| `/pedidos/:id`   | Detalle de un pedido                                 | Sesión        |
-| `/admin`         | Panel de administración (redirige a `/admin/cartas`) | Administrador |
-| `/admin/cartas`  | Gestión de cartas: añadir, buscar, editar y eliminar | Administrador |
-| `/admin/pedidos` | Pedidos de la tienda                                 | Administrador |
-| `*`              | Página no encontrada                                 | Público       |
+| Ruta             | Página                                                    | Acceso        |
+| ---------------- | --------------------------------------------------------- | ------------- |
+| `/`              | Catálogo (filtros en la dirección: `?type=creature`)      | Público       |
+| `/cartas/:id`    | Ficha de una carta                                        | Público       |
+| `/carrito`       | Carrito                                                   | Público       |
+| `/pedidos`       | Mis pedidos                                               | Sesión        |
+| `/pedidos/:id`   | Detalle de un pedido                                      | Sesión        |
+| `/admin`         | Panel de administración (redirige a `/admin/cartas`)      | Administrador |
+| `/admin/cartas`  | Gestión de cartas: añadir, buscar, editar y eliminar      | Administrador |
+| `/admin/pedidos` | Pedidos de la tienda                                      | Administrador |
+| `*`              | Página no encontrada                                      | Público       |
+| `/proyecto`      | Sobre el proyecto: arquitectura, tecnologías y decisiones | Público       |
 
 Todas las páginas comparten un diseño común (`layout/Layout.jsx`) y el panel de administración añade el suyo (`layout/AdminLayout.jsx`) con rutas anidadas. Las rutas protegidas se implementan con componentes de guarda (`RequireAuth` y `RequireAdmin`). Es una comodidad de la interfaz: la protección real está en el backend, que comprueba el token y el rol en cada petición.
 
@@ -353,7 +357,7 @@ Notas del plan gratuito de Render:
 - [x] Enrutado con React Router: diseño común, rutas protegidas, ficha de carta compartible y página 404.
 - [x] Panel de administración con rutas anidadas (`/admin`).
 - [x] Detalle de un pedido (`/pedidos/:id`).
-- [ ] Página «Sobre el proyecto» con el stack y la arquitectura.
+- [x] Página «Sobre el proyecto» con el stack y la arquitectura.
 - [ ] Pasarela de pago en modo de pruebas (Stripe).
 - [ ] Dirección de envío y notificaciones por email.
 - [ ] Tests de integración con una base de datos en memoria.
